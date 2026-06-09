@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "activeInstanceId": "legacy-http-192-168-0-9-5678-KjfjA6VyrC99JPdj",
+  "instances": [
+    {
+      "id": "legacy-http-192-168-0-9-5678-KjfjA6VyrC99JPdj",
+      "name": "192.168.0.9",
+      "host": "http://192.168.0.9:5678",
+      "syncFolder": "workflows",
+      "projectId": "KjfjA6VyrC99JPdj",
+      "projectName": "Personal",
+      "instanceIdentifier": "192_168_0_9_5678_97a731",
+      "workflowDir": "workflows/192_168_0_9_5678_97a731/personal",
+      "verification": {
+        "status": "failed",
+        "lastCheckedAt": "2026-05-04T15:47:01.939Z",
+        "lastError": "Unable to resolve the authenticated n8n user."
+      }
+    }
+  ],
+  "host": "http://192.168.0.9:5678",
+  "syncFolder": "workflows",
+  "projectId": "KjfjA6VyrC99JPdj",
+  "projectName": "Personal",
+  "instanceIdentifier": "192_168_0_9_5678_97a731",
+  "workflowDir": "workflows/192_168_0_9_5678_97a731/personal"
+}
