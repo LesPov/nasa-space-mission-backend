@@ -1,9 +1,8 @@
-// ../models/authModel.ts (Ajusta la ruta de importación del enum)
+// src/features/auth/models/authModel.ts
+
 import { DataTypes } from 'sequelize';
-import { AuthInterface } from '../interfaces/authInterface'; // Asume que esta interfaz existe y es correcta
- import { UserRole, UserStatus } from '../../../infrastructure/middleware/common/enums';
-import { EpisodeModel } from '../../episodes/models/episodeModel';
-import { PlayerStateModel } from '../../episodes/models/playerStateModel';
+import { AuthInterface } from '../interfaces/authInterface'; 
+import { UserRole, UserStatus } from '../../../infrastructure/middleware/common/enums';
 import sequelize from '../../../infrastructure/database/config';
 
 /**
@@ -28,11 +27,11 @@ export const AuthModel = sequelize.define<AuthInterface>('auth', {
     username: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true, // Asegura unicidad a nivel de base de datos
+        // 🔥 SOLUCIÓN: Quitamos unique: true de aquí para evitar el bug de Sequelize con alter: true.
+        // La unicidad ahora se maneja en el array "indexes" al final del archivo.
     },
     /**
      * Hash de la contraseña del usuario. Requerido.
-     * IMPORTANTE: Nunca almacenar contraseñas en texto plano. Asegúrate de usar bcrypt u otro hash seguro.
      */
     password: {
         type: DataTypes.STRING,
@@ -40,64 +39,63 @@ export const AuthModel = sequelize.define<AuthInterface>('auth', {
     },
     /**
      * Correo electrónico único del usuario. Requerido.
-     * Utilizado para comunicación y potencialmente recuperación de cuenta.
      */
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true, // Asegura unicidad a nivel de base de datos
         validate: {
-            isEmail: true, // Añade validación de formato de email a nivel de Sequelize
+            isEmail: true, 
         },
+        // 🔥 SOLUCIÓN: Quitamos unique: true de aquí.
     },
     /**
      * Número de teléfono único del usuario. Opcional.
      */
     phoneNumber: {
         type: DataTypes.STRING,
-        allowNull: true, // Es opcional
-        unique: true, // Si se proporciona, debe ser único
+        allowNull: true, 
+        // 🔥 SOLUCIÓN: Quitamos unique: true de aquí.
     },
     /**
      * Rol del usuario dentro de la aplicación. Requerido.
-     * Determina los permisos y capacidades del usuario.
-     * Utiliza el enum UserRole para consistencia y claridad.
      */
     rol: {
-        type: DataTypes.ENUM(...Object.values(UserRole)), // Usa los valores del enum
+        type: DataTypes.ENUM(...Object.values(UserRole)), 
         allowNull: false,
     },
     /**
      * Estado de activación del usuario (Activado/Desactivado). Requerido.
-     * Controla si el usuario puede iniciar sesión o interactuar con el sistema.
-     * Utiliza el enum UserStatus para consistencia.
-     * Por defecto, un nuevo usuario está 'Activado'.
      */
     status: {
-        type: DataTypes.ENUM(...Object.values(UserStatus)), // Usa los valores del enum
+        type: DataTypes.ENUM(...Object.values(UserStatus)), 
         allowNull: false,
-        defaultValue: UserStatus.Active, // Usa el valor del enum para el default
+        defaultValue: UserStatus.Active, 
     },
 }, {
-    /**
-     * Nombre explícito de la tabla en la base de datos.
-     */
     tableName: 'auth',
-    /**
-     * Habilita las columnas automáticas `createdAt` y `updatedAt`.
-     * `createdAt`: Timestamp de cuándo se creó el registro.
-     * `updatedAt`: Timestamp de la última actualización del registro.
-     * Es útil para rastrear cambios, como la actualización de estado.
-     */
-    timestamps: true, // Mantenlo en true si quieres createdAt y updatedAt
-    // timestamps: false, // Si NO quieres createdAt y updatedAt (comentario original era incorrecto)
+    timestamps: true, 
 
     /**
-     * Opcional: Añadir índices para mejorar el rendimiento de las búsquedas frecuentes.
-     * Por ejemplo, si buscas usuarios por email o username a menudo.
+     * 🔥 SOLUCIÓN DEFINITIVA AL ERROR DE LOS ÍNDICES (ER_TOO_MANY_KEYS):
+     * Declarar los índices con nombres fijos aquí abajo le dice a Sequelize 
+     * exactamente cómo se llaman. Así, al usar alter: true, Sequelize sabe 
+     * que ya existen y no intenta crear "username_1", "username_2", etc.
      */
-    // indexes: [
-    //   { unique: true, fields: ['email'] },
-    //   { unique: true, fields: ['username'] },
-    // ],
-}); 
+    indexes: [
+        {
+            unique: true,
+            name: 'auth_email_unique_idx',
+            fields: ['email']
+        },
+        {
+            unique: true,
+            name: 'auth_username_unique_idx',
+            fields: ['username']
+        },
+        {
+            unique: true,
+            name: 'auth_phoneNumber_unique_idx',
+            fields: ['phoneNumber']
+        }
+    ],
+});

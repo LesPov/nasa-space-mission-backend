@@ -18,7 +18,8 @@ class EpisodeLogicService {
             description: data.description || '',
             authorId: authorId,
             isPublished: false,
-            dialogueGraph: {} 
+            dialogueGraph: {},
+            worldSettings: {} // 🔥 Inicializamos el mundo vacío
         });
         return newEpisode.toJSON();
     }
@@ -30,36 +31,77 @@ class EpisodeLogicService {
         const sceneObjects = await SceneObjectModel.findAll({ where: { episodeId } });
         const triggers = await TriggerModel.findAll({ where: { episodeId } });
 
+        const episodeData = episode.toJSON() as any;
+
         return {
-            episode: episode.toJSON(),
+            episode: episodeData,
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
-            triggers: triggers.map(t => t.toJSON())
+            triggers: triggers.map(t => t.toJSON()),
+            // 🔥 Se lo enviamos al Frontend directo para que cargue la iluminación y gravedad
+            worldSettings: episodeData.worldSettings || {} 
         };
     }
 
-    public async saveFullMap(episodeId: number, sceneObjectsArray: any[]) {
+    // 🔥 ACTUALIZADO PARA RECIBIR WORLDSETTINGS Y GUARDARLO
+    public async saveFullMap(episodeId: number, sceneObjectsArray: any[], triggersArray: any[], worldSettings: any) {
         const transaction = await sequelize.transaction();
         try {
-            await SceneObjectModel.destroy({ where: { episodeId }, transaction });
+            // 🔥 Actualizar el episodio con la configuración Global del Mundo
+            if (worldSettings) {
+                await EpisodeModel.update(
+                    { worldSettings: worldSettings },
+                    { where: { id: episodeId }, transaction }
+                );
+            }
 
-            const objectsToInsert = sceneObjectsArray.map(obj => ({
+            // 1. Limpiamos el mapa actual
+            await SceneObjectModel.destroy({ where: { episodeId }, transaction });
+            await TriggerModel.destroy({ where: { episodeId }, transaction });
+
+            // 2. Preparamos los objetos de escena
+            const objectsToInsert = (sceneObjectsArray || []).map(obj => ({
                 episodeId: episodeId,
                 type: obj.type,
                 name: obj.name,
                 position: obj.position,
                 rotation: obj.rotation,
                 scale: obj.scale,
-                properties: obj.properties || {}, // 🔥 Fallback para evitar errores null
+                properties: obj.properties || {},
                 assetId: obj.assetId || null
             }));
 
-            await SceneObjectModel.bulkCreate(objectsToInsert, { transaction });
+            // 3. Preparamos los Triggers
+            const triggersToInsert = (triggersArray || []).map(trigger => ({
+                episodeId: episodeId,
+                name: trigger.name,
+                position: trigger.position,
+                size: trigger.scale, // Usamos la escala como tamaño de la caja
+                condition: trigger.properties?.condition || 'on_enter',
+                actionType: trigger.properties?.actionType || 'show_message',
+                targetObjectName: trigger.properties?.targetObjectName || '',
+                actionProperties: trigger.properties || {},
+                isRepeatable: trigger.properties?.isRepeatable ?? false,
+                isEnabled: trigger.properties?.isEnabled ?? true
+            }));
+
+            // 4. Inserción masiva
+            if (objectsToInsert.length > 0) {
+                await SceneObjectModel.bulkCreate(objectsToInsert, { transaction });
+            }
+            if (triggersToInsert.length > 0) {
+                await TriggerModel.bulkCreate(triggersToInsert, { transaction });
+            }
+            
             await transaction.commit();
-            return { message: "Mapa guardado correctamente", totalObjects: objectsToInsert.length };
+            return { 
+                message: "Mapa, Triggers y Entorno guardados correctamente", 
+                totalObjects: objectsToInsert.length,
+                totalTriggers: triggersToInsert.length
+            };
 
         } catch (error) {
             await transaction.rollback();
-            console.error("Error guardando el mapa:", error);
+            console.error("Error guardando el mapa, entorno y los triggers:", error);
             throw new Error("No se pudo guardar el mapa");
         }
     }

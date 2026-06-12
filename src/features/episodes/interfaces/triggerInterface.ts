@@ -9,7 +9,8 @@ export enum TriggerCondition {
 export enum TriggerAction {
     PLAY_ANIMATION = 'play_animation',
     TOGGLE_VISIBILITY = 'toggle_visibility',
-    MOVE_OBJECT = 'move_object'
+    MOVE_OBJECT = 'move_object',
+    SHOW_MESSAGE = 'show_message' // 🔥 NUEVO: Permitimos mostrar mensajes
 }
 
 export interface TriggerInterface {

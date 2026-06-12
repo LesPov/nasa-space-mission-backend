@@ -14,7 +14,7 @@ class AssetLogicService {
         if (!file) {
             throw new Error("No se proporcionó ningún archivo.");
         }
-
+ 
         const ext = path.extname(file.originalname).toLowerCase();
         let typeToSave: string;
 

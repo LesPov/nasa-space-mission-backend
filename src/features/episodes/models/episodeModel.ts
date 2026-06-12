@@ -28,11 +28,18 @@ export const EpisodeModel = sequelize.define('Episode', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    // ¡LA MAGIA AQUÍ! El JSON donde guardarás el árbol de diálogos y eventos de la historia
+    // El JSON donde guardarás el árbol de diálogos y eventos de la historia
     dialogueGraph: {
         type: DataTypes.JSON,
         allowNull: true,
         defaultValue: {},
         comment: 'JSON exportado desde el Editor de Diálogos de Angular'
+    },
+    // 🔥 AÑADIDO: Guardar configuraciones del entorno (Babylon.js)
+    worldSettings: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {},
+        comment: 'Configuración global del entorno (cielo, gravedad, niebla, luz)'
     }
 }, { tableName: 'episodes', timestamps: true });

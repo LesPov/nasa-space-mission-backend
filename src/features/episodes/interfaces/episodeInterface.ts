@@ -19,6 +19,9 @@ export interface EpisodeInterface {
     // Este campo determinará qué script de Python se debe ejecutar.
     analysisType: AnalysisType;
     
+    // 🔥 AÑADIDO: Guardar los datos del entorno 3D (cielo, gravedad, luz, niebla)
+    worldSettings?: any; 
+    
     triggers?: TriggerInterface[]; // Opcional, solo para respuestas completas
     createdAt?: Date;
     updatedAt?: Date;

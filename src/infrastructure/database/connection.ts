@@ -42,9 +42,45 @@ export const defineDatabaseAssociations = () => {
     console.log("[Database] Asociaciones de modelos definidas para el Game Engine.");
 };
 
+/**
+ * 🔥 FUNCION DE LIMPIEZA AUTOMÁTICA 🔥
+ * Esta función detecta y elimina los índices basura que Sequelize multiplicó por error.
+ * No afecta los datos de los usuarios, solo elimina configuraciones redundantes en MySQL.
+ */
+const cleanGarbageIndexes = async () => {
+    try {
+        console.log("[Database] Limpiando índices basura de la tabla 'auth'...");
+        
+        // Obtenemos todos los índices actuales de la tabla auth
+        const [results]: any = await sequelize.query("SHOW INDEX FROM auth");
+        
+        // Filtramos para obtener solo los nombres únicos
+        const indexNames = [...new Set(results.map((i: any) => i.Key_name))];
+        
+        for (const indexName of indexNames) {
+            // Jamás borramos la PRIMARY KEY, solo los índices secundarios
+            if (indexName !== 'PRIMARY') {
+                try {
+                    // Borramos el índice. Al usar alter:true después, Sequelize creará los correctos.
+                    await sequelize.query(`ALTER TABLE auth DROP INDEX \`${indexName}\``);
+                    console.log(`[Database] Índice eliminado: ${indexName}`);
+                } catch (err) {
+                    // Si falla uno no pasa nada, continuamos con el siguiente
+                }
+            }
+        }
+        console.log("[Database] Limpieza de índices completada con éxito.");
+    } catch (error) {
+        console.log("[Database] No se pudo limpiar índices (probablemente la tabla aún no existe).");
+    }
+};
+
 export const syncDatabase = async () => {
     try {
-        // alter: true sincroniza los cambios nuevos sin borrar la info que ya tienes
+        // 1. Ejecutamos el limpiador de basura ANTES de sincronizar
+        await cleanGarbageIndexes();
+
+        // 2. alter: true sincronizará la nueva estructura sin los bugs de los índices
         await sequelize.sync({ alter: true });
         console.log('[Database] ✅ Sincronización con la base de datos completada exitosamente.');
     } catch (error) {

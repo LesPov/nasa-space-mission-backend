@@ -3,7 +3,6 @@ import EpisodeLogicService from '../services/episodeLogicService';
 
 class EpisodeController {
     
-    // 👇 METODO QUE FALTABA
     public async getAllEpisodes(req: Request, res: Response): Promise<void> {
         try {
             const episodes = await EpisodeLogicService.getAllEpisodes();
@@ -34,10 +33,11 @@ class EpisodeController {
         }
     }
 
+    // 🔥 MODIFICADO: AHORA RECIBE SCENEOBJECTS, TRIGGERS Y WORLDSETTINGS
     public async saveMap(req: Request, res: Response): Promise<void> {
         try {
-            const { sceneObjects } = req.body;
-            const response = await EpisodeLogicService.saveFullMap(Number(req.params.id), sceneObjects);
+            const { sceneObjects, triggers, worldSettings } = req.body;
+            const response = await EpisodeLogicService.saveFullMap(Number(req.params.id), sceneObjects, triggers, worldSettings);
             res.status(200).json(response);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
