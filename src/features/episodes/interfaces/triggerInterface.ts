@@ -10,13 +10,15 @@ export enum TriggerAction {
     PLAY_ANIMATION = 'play_animation',
     TOGGLE_VISIBILITY = 'toggle_visibility',
     MOVE_OBJECT = 'move_object',
-    SHOW_MESSAGE = 'show_message' // 🔥 NUEVO: Permitimos mostrar mensajes
+    SHOW_MESSAGE = 'show_message'
 }
 
 export interface TriggerInterface {
     id: number;
     episodeId: number;
+    uid: string; // 🔥 NUEVO: ID único para Triggers
     name: string;
+    parentId?: string | null; // 🔥 AHORA GUARDARÁ EL 'uid' DEL PADRE
     position: { x: number; y: number; z: number };
     size: { x: number; y: number; z: number };
     condition: TriggerCondition;
@@ -27,4 +29,4 @@ export interface TriggerInterface {
     isEnabled: boolean;
 }
 
-export type TriggerCreationAttributes = Optional<TriggerInterface, 'id'>;
+export type TriggerCreationAttributes = Optional<TriggerInterface, 'id' | 'uid'>;

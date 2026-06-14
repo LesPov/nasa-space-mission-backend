@@ -1,10 +1,8 @@
-// src/app/features/episodes/models/triggerModel.ts
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-// Ahora importamos los enums reales
 import { TriggerAction, TriggerCondition, TriggerInterface } from '../interfaces/triggerInterface';
 
-interface TriggerCreationAttributes extends Optional<TriggerInterface, 'id'> {}
+interface TriggerCreationAttributes extends Optional<TriggerInterface, 'id' | 'uid'> {}
 
 export const TriggerModel = sequelize.define<Model<TriggerInterface, TriggerCreationAttributes>>('Trigger', {
     id: {
@@ -16,10 +14,21 @@ export const TriggerModel = sequelize.define<Model<TriggerInterface, TriggerCrea
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    uid: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: DataTypes.UUIDV4,
+        comment: 'ID único del trigger en el Frontend'
+    },
     name: {
         type: DataTypes.STRING,
         allowNull: false,
         comment: "Nombre único del trigger para ser referenciado en scripts o por otros triggers."
+    },
+    parentId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "El UID del nodo padre al que está atado este trigger." 
     },
     position: {
         type: DataTypes.JSON,
@@ -32,13 +41,11 @@ export const TriggerModel = sequelize.define<Model<TriggerInterface, TriggerCrea
         comment: "Dimensiones {x, y, z} de la caja de activación del trigger."
     },
     condition: {
-        // ¡ESTO AHORA FUNCIONA! Object.values(TriggerCondition) devuelve ['on_enter', 'on_interact', ...]
         type: DataTypes.ENUM(...Object.values(TriggerCondition)),
         allowNull: false,
         comment: "Condición que activa el trigger (ej: al entrar, al interactuar)."
     },
     actionType: {
-        // ¡ESTO AHORA FUNCIONA!
         type: DataTypes.ENUM(...Object.values(TriggerAction)),
         allowNull: false,
         comment: "El tipo de acción que se ejecuta cuando el trigger se activa."
@@ -46,7 +53,7 @@ export const TriggerModel = sequelize.define<Model<TriggerInterface, TriggerCrea
     targetObjectName: {
         type: DataTypes.STRING,
         allowNull: false,
-        comment: "El 'name' del SceneObject que será afectado por la acción."
+        comment: "El 'uid' o 'name' del SceneObject que será afectado por la acción."
     },
     actionProperties: {
         type: DataTypes.JSON,

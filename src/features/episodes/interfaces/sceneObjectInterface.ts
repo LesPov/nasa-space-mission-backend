@@ -8,23 +8,19 @@ export type SceneObjectType =
 export interface SceneObjectInterface {
     id: number;
     episodeId: number;
+    uid: string; // 🔥 NUEVO: ID único de BabylonJS para evitar problemas con nombres duplicados
     type: SceneObjectType;
     name: string;
-
-    // --- TRANSFORMACIONES ---
+    parentId: string | null; // 🔥 AHORA GUARDARÁ EL 'uid' DEL PADRE, NO EL NOMBRE
     position: { x: number; y: number; z: number };
     rotation: { x: number; y: number; z: number };
     scale: { x: number; y: number; z: number };
-
-    // --- PROPIEDADES EXTRA (Luces, físicas, etc) ---
     properties: { [key: string]: any } | null; 
-    
-    // --- RELACIÓN CON ARCHIVOS (.GLB, .MP4, etc) ---
     assetId?: number | null;
     asset?: AssetInterface;
 }
 
 export type SceneObjectCreationAttributes = Optional<
     SceneObjectInterface,
-    'id' | 'asset' | 'properties'
+    'id' | 'uid' | 'asset' | 'properties'
 >;

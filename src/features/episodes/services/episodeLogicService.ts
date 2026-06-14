@@ -2,6 +2,7 @@ import { EpisodeModel } from '../models/episodeModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
 import sequelize from '../../../infrastructure/database/config';
+import crypto from 'crypto';
 
 class EpisodeLogicService {
     
@@ -19,7 +20,7 @@ class EpisodeLogicService {
             authorId: authorId,
             isPublished: false,
             dialogueGraph: {},
-            worldSettings: {} // 🔥 Inicializamos el mundo vacío
+            worldSettings: {}
         });
         return newEpisode.toJSON();
     }
@@ -37,16 +38,13 @@ class EpisodeLogicService {
             episode: episodeData,
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
-            // 🔥 Se lo enviamos al Frontend directo para que cargue la iluminación y gravedad
             worldSettings: episodeData.worldSettings || {} 
         };
     }
 
-    // 🔥 ACTUALIZADO PARA RECIBIR WORLDSETTINGS Y GUARDARLO
     public async saveFullMap(episodeId: number, sceneObjectsArray: any[], triggersArray: any[], worldSettings: any) {
         const transaction = await sequelize.transaction();
         try {
-            // 🔥 Actualizar el episodio con la configuración Global del Mundo
             if (worldSettings) {
                 await EpisodeModel.update(
                     { worldSettings: worldSettings },
@@ -58,11 +56,13 @@ class EpisodeLogicService {
             await SceneObjectModel.destroy({ where: { episodeId }, transaction });
             await TriggerModel.destroy({ where: { episodeId }, transaction });
 
-            // 2. Preparamos los objetos de escena
+            // 2. Preparamos los objetos de escena con UID
             const objectsToInsert = (sceneObjectsArray || []).map(obj => ({
                 episodeId: episodeId,
+                uid: obj.uid || crypto.randomUUID(), // Genera un ID único nativo si no viene
                 type: obj.type,
                 name: obj.name,
+                parentId: obj.parentId || null,
                 position: obj.position,
                 rotation: obj.rotation,
                 scale: obj.scale,
@@ -70,18 +70,20 @@ class EpisodeLogicService {
                 assetId: obj.assetId || null
             }));
 
-            // 3. Preparamos los Triggers
+            // 3. Preparamos los Triggers con UID
             const triggersToInsert = (triggersArray || []).map(trigger => ({
                 episodeId: episodeId,
+                uid: trigger.uid || crypto.randomUUID(), // Genera un ID único nativo si no viene
                 name: trigger.name,
+                parentId: trigger.parentId || null,
                 position: trigger.position,
-                size: trigger.scale, // Usamos la escala como tamaño de la caja
-                condition: trigger.properties?.condition || 'on_enter',
-                actionType: trigger.properties?.actionType || 'show_message',
-                targetObjectName: trigger.properties?.targetObjectName || '',
-                actionProperties: trigger.properties || {},
-                isRepeatable: trigger.properties?.isRepeatable ?? false,
-                isEnabled: trigger.properties?.isEnabled ?? true
+                size: trigger.scale || trigger.size,
+                condition: trigger.properties?.condition || trigger.condition || 'on_enter',
+                actionType: trigger.properties?.actionType || trigger.actionType || 'show_message',
+                targetObjectName: trigger.properties?.targetObjectName || trigger.targetObjectName || '',
+                actionProperties: trigger.properties || trigger.actionProperties || {},
+                isRepeatable: trigger.properties?.isRepeatable ?? trigger.isRepeatable ?? false,
+                isEnabled: trigger.properties?.isEnabled ?? trigger.isEnabled ?? true
             }));
 
             // 4. Inserción masiva

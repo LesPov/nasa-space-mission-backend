@@ -7,6 +7,7 @@ class SceneObjectController {
     public async getObjectById(req: Request, res: Response): Promise<void> {
         try {
             const { episodeId, objectId } = req.params;
+            // Busca por el PK (id numérico)
             const sceneObject = await SceneObjectModel.findOne({
                 where: { id: objectId, episodeId }
             });
@@ -21,9 +22,6 @@ class SceneObjectController {
             res.status(500).json({ message: "Error interno.", error: error.message });
         }
     }
-
-    // Nota: La creación y actualización masiva ahora se maneja desde el 
-    // EpisodeController mediante el método saveMap()
 }
 
 export default new SceneObjectController();

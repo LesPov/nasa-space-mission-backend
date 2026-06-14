@@ -11,15 +11,24 @@ export const SceneObjectModel = sequelize.define('SceneObject', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    uid: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: DataTypes.UUIDV4,
+        comment: 'ID único del objeto en el Frontend (Babylon.js) para evitar cruces de nombres'
+    },
     type: {
-        // 🔥 CAMBIO CRUCIAL: Cambiamos de ENUM a STRING. 
-        // Sequelize en MySQL sufre al actualizar ENUMs y rechaza los objetos nuevos.
         type: DataTypes.STRING,
         allowNull: false, 
     },
     name: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    parentId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Guarda el UID del objeto padre en lugar del nombre'
     },
     position: {
         type: DataTypes.JSON, 
