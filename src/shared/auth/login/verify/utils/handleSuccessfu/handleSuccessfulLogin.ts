@@ -1,4 +1,3 @@
-
 import jwt from 'jsonwebtoken';
 import { successMessages } from '../../../../succes/successMessages';
  
@@ -13,9 +12,16 @@ export const handleSuccessfulLogin = (user: any, password: string) => {
 };
 
 export const generateAuthToken = (user: any) => {
+    // 🔥 SEGURIDAD: Eliminamos clave hardcodeada "pepito123" y obligamos a usar env
+    const secret = process.env.SECRET_KEY;
+    if (!secret) {
+        throw new Error("CRÍTICO: SECRET_KEY no está definida en las variables de entorno.");
+    }
+
+    // 🔥 SEGURIDAD: Añadimos expiración obligatoria de 24 horas al token
     return jwt.sign({
         username: user.username,
         rol: user.rol,
         userId: user.id
-    }, process.env.SECRET_KEY || 'pepito123');
+    }, secret, { expiresIn: '24h' });
 };

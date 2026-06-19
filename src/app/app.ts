@@ -1,5 +1,3 @@
-
-// src/app/app.ts
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import compression from 'compression';
@@ -30,15 +28,12 @@ class Server {
             console.log("[Server] Iniciando secuencia de arranque rápido...");
             
             defineDatabaseAssociations();
-            // Esto ahora será mucho más veloz y seguro.
             await syncDatabase();
             
             this.configureMiddlewares();
             this.configureRoutes();
             
-            // Levantamos el puerto HTTP inmediatamente antes de cualquier proceso pesado
             this.startListening();
-
         } catch (error) {
             console.error("❌ Fallo crítico durante el arranque del servidor.", error);
             process.exit(1); 
@@ -47,6 +42,14 @@ class Server {
 
     private configureMiddlewares(): void {
         this.app.set('trust proxy', 1);
+
+        // Cabeceras de seguridad básicas
+        this.app.use((_req, res, next) => {
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.setHeader('X-Frame-Options', 'DENY');
+            res.setHeader('X-XSS-Protection', '1; mode=block');
+            next();
+        });
 
         const rawOrigins = process.env.ALLOWED_ORIGINS || '*';
         const allowedOrigins = rawOrigins.split(',').map(o => o.trim());
@@ -62,13 +65,28 @@ class Server {
         };
         this.app.use(cors(corsOptions));
 
-        this.app.use(compression());
-        const bodyLimit = process.env.BODY_LIMIT || '150mb';
+        // 🔥 OPTIMIZACIÓN: No comprimir archivos 3D/Multimedia, ahorra muchísima CPU en el backend
+        this.app.use(compression({
+            filter: (req, res) => {
+                if (req.headers['x-no-compression']) { return false; }
+                if (req.url.match(/\.(glb|mp4|webm|png|jpg|jpeg)$/i)) { return false; }
+                return compression.filter(req, res);
+            }
+        }));
+
+        // 🔥 PROTECCIÓN DE MEMORIA: Reducimos de 150mb a 25mb para evitar bloqueos del Event Loop.
+        // Las subidas de 100mb de GLB usan Multer (form-data), no express.json.
+        const bodyLimit = process.env.BODY_LIMIT || '25mb';
         this.app.use(express.json({ limit: bodyLimit }));
         this.app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
+        // 🔥 CACHÉ ULTRA AGRESIVA: Los assets servidos al frontend se guardan en el disco del navegador por 1 año.
         const uploadsPath = path.resolve(process.cwd(), 'uploads');
-        this.app.use('/uploads', express.static(uploadsPath));
+        this.app.use('/uploads', express.static(uploadsPath, {
+            maxAge: '1y',
+            immutable: true, 
+            etag: false 
+        }));
     }
 
     private configureRoutes(): void {
@@ -91,8 +109,6 @@ class Server {
         this.app.listen(this.port, () => {
             console.log(`🚀 [Server] Servidor API Express escuchando en el puerto ${this.port}`);
             
-            // 🔥 AISLAMIENTO TOTAL: Postergamos la carga de Puppeteer y Chromium.
-            // Le damos un respiro al Event Loop de 2 segundos para que el Frontend ya pueda conectarse.
             setTimeout(() => {
                 initializeChatbot().catch(err => console.error("Error en background bot:", err));
             }, 2000);

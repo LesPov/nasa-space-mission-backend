@@ -8,11 +8,15 @@ const extractToken = (req: Request): string | null => {
 };
 
 const verifyToken = (token: string): any => {
-  return jwt.verify(token, process.env.SECRET_KEY || 'pepito123');
+  // 🔥 SEGURIDAD: Eliminamos el respaldo inseguro
+  const secret = process.env.SECRET_KEY;
+  if (!secret) {
+      throw new Error("Configuración de servidor incompleta: falta SECRET_KEY.");
+  }
+  return jwt.verify(token, secret);
 };
 
 const validateRole = (allowedRoles: string | string[]) => {
-  // Convertir a arreglo en caso de que se reciba un solo rol
   const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   return (req: Request, res: Response, next: NextFunction): void => {
     const token = extractToken(req);
@@ -25,7 +29,7 @@ const validateRole = (allowedRoles: string | string[]) => {
     try {
       const decodedToken = verifyToken(token);
       const userRole = decodedToken.rol;
-      // Verifica si el rol del usuario está en el arreglo de roles permitidos
+      
       if (rolesArray.includes(userRole)) {
         next();
       } else {
@@ -33,10 +37,13 @@ const validateRole = (allowedRoles: string | string[]) => {
           msg: errorMessages.accessDenied,
         });
       }
-    } catch (error) {
-      res.status(401).json({
-        msg: errorMessages.invalidToken,
-      });
+    } catch (error: any) {
+      // Diferenciar expiración de manipulación
+      if (error.name === 'TokenExpiredError') {
+         res.status(401).json({ msg: errorMessages.tokenExpired });
+      } else {
+         res.status(401).json({ msg: errorMessages.invalidToken });
+      }
     }
   };
 };

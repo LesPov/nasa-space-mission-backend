@@ -43,7 +43,7 @@ class EpisodeLogicService {
         };
     }
 
-    public async saveFullMap(episodeId: number, sceneObjectsArray: any[], triggersArray: any[], worldSettings: any) {
+    public async saveFullMap(episodeId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], worldSettings: any) {
         const transaction = await sequelize.transaction();
         try {
             // 1. Guardar settings globales
@@ -54,22 +54,34 @@ class EpisodeLogicService {
                 );
             }
 
-            // 2. Extraer el estado actual de la base de datos (Solo IDs y UIDs para ser ultrarrápido)
-            const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { episodeId }, transaction });
-            const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { episodeId }, transaction });
+            // 2. Ejecutar Eliminaciones Explícitas primero (para evitar colisiones de IDs si se recrean)
+            if (deletedObjects.length > 0) {
+                await SceneObjectModel.destroy({ where: { episodeId, uid: deletedObjects }, transaction });
+            }
+            if (deletedTriggers.length > 0) {
+                await TriggerModel.destroy({ where: { episodeId, uid: deletedTriggers }, transaction });
+            }
 
-            // Diccionarios para cruzar UID del frontend con el ID numérico de la BD
-            const existingObjMap = new Map(existingObjects.map(o => [o.getDataValue('uid'), o.getDataValue('id')]));
-            const existingTriggerMap = new Map(existingTriggers.map(t => [t.getDataValue('uid'), t.getDataValue('id')]));
+            // 3. Extraer IDs numéricos solo de los UIDs que vienen en el Delta
+            const incomingObjUids = sceneObjectsDelta.map(o => o.uid).filter(Boolean);
+            const incomingTriggerUids = triggersDelta.map(t => t.uid).filter(Boolean);
 
-            const incomingObjUids = new Set<string>();
-            const incomingTriggerUids = new Set<string>();
+            let existingObjMap = new Map();
+            let existingTriggerMap = new Map();
 
-            // 3. Preparar Objetos (Upsert Format)
-            const objectsToUpsert = (sceneObjectsArray || []).map(obj => {
+            if (incomingObjUids.length > 0) {
+                const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { episodeId, uid: incomingObjUids }, transaction });
+                existingObjMap = new Map(existingObjects.map(o => [o.getDataValue('uid'), o.getDataValue('id')]));
+            }
+
+            if (incomingTriggerUids.length > 0) {
+                const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { episodeId, uid: incomingTriggerUids }, transaction });
+                existingTriggerMap = new Map(existingTriggers.map(t => [t.getDataValue('uid'), t.getDataValue('id')]));
+            }
+
+            // 4. Preparar Objetos para Upsert
+            const objectsToUpsert = (sceneObjectsDelta || []).map(obj => {
                 const finalUid = obj.uid || crypto.randomUUID();
-                incomingObjUids.add(finalUid);
-                
                 const dbObj: any = {
                     episodeId: episodeId,
                     uid: finalUid,
@@ -82,20 +94,15 @@ class EpisodeLogicService {
                     properties: obj.properties || {},
                     assetId: obj.assetId || null
                 };
-                
-                // Si el objeto ya existe en la BD, le inyectamos su Primary Key
                 if (existingObjMap.has(finalUid)) {
                     dbObj.id = existingObjMap.get(finalUid);
                 }
-                
                 return dbObj;
             });
 
-            // 4. Preparar Triggers (Upsert Format)
-            const triggersToUpsert = (triggersArray || []).map(trigger => {
+            // 5. Preparar Triggers para Upsert
+            const triggersToUpsert = (triggersDelta || []).map(trigger => {
                 const finalUid = trigger.uid || crypto.randomUUID();
-                incomingTriggerUids.add(finalUid);
-                
                 const dbTrigger: any = {
                     episodeId: episodeId,
                     uid: finalUid,
@@ -110,35 +117,13 @@ class EpisodeLogicService {
                     isRepeatable: trigger.properties?.isRepeatable ?? trigger.isRepeatable ?? false,
                     isEnabled: trigger.properties?.isEnabled ?? trigger.isEnabled ?? true
                 };
-
-                // Inyectamos Primary Key si ya existía
                 if (existingTriggerMap.has(finalUid)) {
                     dbTrigger.id = existingTriggerMap.get(finalUid);
                 }
-
                 return dbTrigger;
             });
 
-            // 5. Detectar qué elementos fueron borrados desde el frontend
-            const idsToDeleteObjects = existingObjects
-                .filter(o => !incomingObjUids.has(o.getDataValue('uid')))
-                .map(o => o.getDataValue('id'));
-
-            const idsToDeleteTriggers = existingTriggers
-                .filter(t => !incomingTriggerUids.has(t.getDataValue('uid')))
-                .map(t => t.getDataValue('id'));
-
-            // 6. Ejecutar queries en bloque
-            
-            // A) Borrar lo que ya no existe
-            if (idsToDeleteObjects.length > 0) {
-                await SceneObjectModel.destroy({ where: { id: idsToDeleteObjects }, transaction });
-            }
-            if (idsToDeleteTriggers.length > 0) {
-                await TriggerModel.destroy({ where: { id: idsToDeleteTriggers }, transaction });
-            }
-
-            // B) Upsert (Inserta nuevos o Actualiza los existentes en base a la PK "id")
+            // 6. Ejecutar Upserts Masivos (Ahora solo sobre lo modificado)
             if (objectsToUpsert.length > 0) {
                 await SceneObjectModel.bulkCreate(objectsToUpsert, { 
                     updateOnDuplicate: ['type', 'name', 'parentId', 'position', 'rotation', 'scale', 'properties', 'assetId'], 
@@ -156,17 +141,17 @@ class EpisodeLogicService {
             await transaction.commit();
             
             return { 
-                message: "Mapa guardado eficientemente mediante Deltas", 
-                totalObjects: objectsToUpsert.length,
-                totalTriggers: triggersToUpsert.length,
-                deletedObjects: idsToDeleteObjects.length,
-                deletedTriggers: idsToDeleteTriggers.length
+                message: "Mapa guardado eficientemente mediante Deltas Estrictos", 
+                upsertedObjects: objectsToUpsert.length,
+                upsertedTriggers: triggersToUpsert.length,
+                deletedObjects: deletedObjects.length,
+                deletedTriggers: deletedTriggers.length
             };
 
         } catch (error) {
             await transaction.rollback();
-            console.error("Error guardando el mapa (Upsert):", error);
-            throw new Error("No se pudo guardar el mapa");
+            console.error("Error guardando el mapa (Upsert Parcial):", error);
+            throw new Error("No se pudo guardar el mapa de forma incremental");
         }
     }
 

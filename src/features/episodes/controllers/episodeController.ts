@@ -2,6 +2,36 @@
 import { NextFunction, Request, Response } from 'express';
 import EpisodeLogicService from '../services/episodeLogicService';
 
+// 🔥 DTO Validator estricto implementado de forma nativa para no forzar dependencias nuevas
+const validateSaveMapDTO = (data: any) => {
+    if (!data || typeof data !== 'object') {
+        throw new Error("Payload inválido. Se esperaba un objeto JSON.");
+    }
+    
+    if (data.sceneObjectsDelta && !Array.isArray(data.sceneObjectsDelta)) {
+        throw new Error("sceneObjectsDelta debe ser un array válido.");
+    }
+    
+    if (data.triggersDelta && !Array.isArray(data.triggersDelta)) {
+        throw new Error("triggersDelta debe ser un array válido.");
+    }
+    
+    if (data.deletedObjects && !Array.isArray(data.deletedObjects)) {
+        throw new Error("deletedObjects debe ser un array válido.");
+    }
+    
+    if (data.deletedTriggers && !Array.isArray(data.deletedTriggers)) {
+        throw new Error("deletedTriggers debe ser un array válido.");
+    }
+
+    // Validación básica de los elementos para asegurar integridad
+    (data.sceneObjectsDelta || []).forEach((obj: any, index: number) => {
+        if (!obj.uid || typeof obj.uid !== 'string') throw new Error(`El objeto en sceneObjectsDelta[${index}] carece de UID válido.`);
+        if (!obj.type || typeof obj.type !== 'string') throw new Error(`El objeto en sceneObjectsDelta[${index}] carece de TYPE válido.`);
+        if (!obj.position || typeof obj.position !== 'object') throw new Error(`El objeto en sceneObjectsDelta[${index}] requiere POSITION.`);
+    });
+};
+
 class EpisodeController {
     
     public async getAllEpisodes(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -36,11 +66,23 @@ class EpisodeController {
 
     public async saveMap(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { sceneObjects, triggers, worldSettings } = req.body;
-            const response = await EpisodeLogicService.saveFullMap(Number(req.params.id), sceneObjects, triggers, worldSettings);
+            // 🔥 Validación de DTO antes de tocar la Lógica de Negocio o Base de Datos
+            validateSaveMapDTO(req.body);
+
+            const { sceneObjectsDelta, triggersDelta, deletedObjects, deletedTriggers, worldSettings } = req.body;
+            
+            const response = await EpisodeLogicService.saveFullMap(
+                Number(req.params.id), 
+                sceneObjectsDelta || [], 
+                triggersDelta || [], 
+                deletedObjects || [], 
+                deletedTriggers || [], 
+                worldSettings
+            );
+            
             res.status(200).json(response);
         } catch (error: any) {
-            next(error);
+            res.status(400).json({ message: 'Error de validación DTO al guardar el mapa', error: error.message });
         }
     }
 
