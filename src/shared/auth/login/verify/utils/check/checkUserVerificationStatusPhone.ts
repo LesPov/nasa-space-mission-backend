@@ -1,30 +1,11 @@
-import { Response } from 'express';
+
+import { AppError } from '../../../../../../infrastructure/errors/app.error';
 import { errorMessages } from '../../../../errors/auth.errors';
- 
-/**
- * Verifica si el usuario ya ha sido verificado por isPhoneVerified.
- * @param user - El objeto usuario.
- * @returns Verdadero si el isPhoneVerified ya está verificado, falso en caso contrario.
- */
-export const checkUserVerificationStatusPhoneLogin = (user: any) => {
-    // Verificar el estado de la verificación del numero si no esta 
-    return user?.verification?.isPhoneVerified || false;
-};
-/**
- * Maneja el error cuando el numero ya está verificado.
- * 
- * @param isPhoneVerified - Indicador de si el numero está verificado.
- * @param res - El objeto de respuesta HTTP proporcionado por Express.
- * 
- * @throws Lanza una excepción si el numero ya está verificado.
- */
-export const handlePhoneLoginNotVerificationErroruser = (isPhoneVerified: boolean, res: Response) => {
-    if (!isPhoneVerified) {
-        const errorMsg = errorMessages.numberNotVerified();
-        res.status(400).json({
-            msg: errorMsg,
-            errors: 'Error: El numero no ha sido verificado. Por favor, verifica tu correo antes de continuar.',
-        });
-        throw new Error("User isPhoneVerified not verified.");
+
+export const checkUserVerificationStatusPhone = (user: any): boolean => {
+    const isPhoneVerified = user?.verification?.isPhoneVerified || false;
+    if (isPhoneVerified) {
+        throw new AppError(errorMessages.phoneAlreadyVerified(), 400, 'Error: El número de teléfono ya ha sido verificado. No es necesario verificarlo de nuevo.');
     }
-}; 
+    return isPhoneVerified;
+};

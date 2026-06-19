@@ -1,35 +1,28 @@
-import { Request, Response } from 'express';
-import { handleUserNotFoundError } from '../../../shared/auth/emails/utils/errors/handleUserNotFoundError';
+
+import { NextFunction, Request, Response } from 'express';
 import { findUserByUsername } from '../../../shared/auth/emails/utils/findUser/findUserByUsername';
 import { sendVerificationEmail } from '../../../shared/auth/register/utils/validations/sendVerificationEmail';
 import { createOrUpdateVerificationEntry } from '../../../shared/auth/emails/utils/createOrUpdateVerificationEntry';
-import { handleServerErrorRsend } from '../../../shared/auth/emails/utils/errors/handleServerErrorRsend';
+import { AppError } from '../../../infrastructure/errors/app.error';
+import { errorMessages } from '../../../shared/auth/errors/auth.errors';
   
-export const resendVerificationCode = async (req: Request, res: Response) => {
+export const resendVerificationCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { username } = req.body;
 
-        //Busca un usuario en la base de datos basado en su nombre de usuario.
         const user = await findUserByUsername(username);
-        // Maneja el error si el usuario no existe
-        handleUserNotFoundError(username, user, res);
+        if (!user) {
+            throw new AppError(errorMessages.userNotFound(username), 404, 'Error: El usuario no fue encontrado.');
+        }
 
-        if (!user) return; // Si user es null, sale de la función
-
-        // Generar y guardar un código de verificación para el correo electrónico del usuario
         const newVerificationCode = await createOrUpdateVerificationEntry(user.id);
-
-        // Enviar el correo electrónico de verificación al usuario con el nuevo código
         await sendVerificationEmail(user.email, username, newVerificationCode);
 
-        // Mensaje de éxito
-        res.json({
+        res.status(200).json({
             msg: 'Código de verificación reenviado exitosamente.',
         });
 
     } catch (error: any) {
-        // Manejar errores generales del servidor y responder con un mensaje de error
-        handleServerErrorRsend(error, res);
+        next(error);
     }
-
 };

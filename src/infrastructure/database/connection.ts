@@ -1,3 +1,4 @@
+
 import sequelize from "./config";
 
 // --- Importaciones de Modelos ---
@@ -9,6 +10,7 @@ import { SceneObjectModel } from "../../features/episodes/models/sceneObjectMode
 import { TriggerModel } from "../../features/episodes/models/triggerModel";
 import { PlayerStateModel } from "../../features/episodes/models/playerStateModel";
 import { userProfileModel } from "../../features/profiles/models/userProfileModel";
+import { PrefabModel } from "../../features/episodes/models/prefabModel"; 
 
 export const defineDatabaseAssociations = () => {
     // Auth -> Perfil, Verificación
@@ -32,6 +34,10 @@ export const defineDatabaseAssociations = () => {
     AssetModel.hasMany(SceneObjectModel, { foreignKey: 'assetId' });
     SceneObjectModel.belongsTo(AssetModel, { foreignKey: 'assetId', as: 'asset' });
 
+    // Prefabs GLOBALES -> Asset (Modelos 3D y Texturas)
+    AssetModel.hasMany(PrefabModel, { foreignKey: 'assetId' });
+    PrefabModel.belongsTo(AssetModel, { foreignKey: 'assetId', as: 'asset' });
+
     // Jugador -> Progreso (Partidas Guardadas)
     AuthModel.hasMany(PlayerStateModel, { foreignKey: 'userId', as: 'savedGames', onDelete: 'CASCADE' });
     PlayerStateModel.belongsTo(AuthModel, { foreignKey: 'userId' });
@@ -42,47 +48,13 @@ export const defineDatabaseAssociations = () => {
     console.log("[Database] Asociaciones de modelos definidas para el Game Engine.");
 };
 
-/**
- * 🔥 FUNCION DE LIMPIEZA AUTOMÁTICA 🔥
- * Esta función detecta y elimina los índices basura que Sequelize multiplicó por error.
- * No afecta los datos de los usuarios, solo elimina configuraciones redundantes en MySQL.
- */
-const cleanGarbageIndexes = async () => {
-    try {
-        console.log("[Database] Limpiando índices basura de la tabla 'auth'...");
-        
-        // Obtenemos todos los índices actuales de la tabla auth
-        const [results]: any = await sequelize.query("SHOW INDEX FROM auth");
-        
-        // Filtramos para obtener solo los nombres únicos
-        const indexNames = [...new Set(results.map((i: any) => i.Key_name))];
-        
-        for (const indexName of indexNames) {
-            // Jamás borramos la PRIMARY KEY, solo los índices secundarios
-            if (indexName !== 'PRIMARY') {
-                try {
-                    // Borramos el índice. Al usar alter:true después, Sequelize creará los correctos.
-                    await sequelize.query(`ALTER TABLE auth DROP INDEX \`${indexName}\``);
-                    console.log(`[Database] Índice eliminado: ${indexName}`);
-                } catch (err) {
-                    // Si falla uno no pasa nada, continuamos con el siguiente
-                }
-            }
-        }
-        console.log("[Database] Limpieza de índices completada con éxito.");
-    } catch (error) {
-        console.log("[Database] No se pudo limpiar índices (probablemente la tabla aún no existe).");
-    }
-};
-
 export const syncDatabase = async () => {
     try {
-        // 1. Ejecutamos el limpiador de basura ANTES de sincronizar
-        await cleanGarbageIndexes();
-
-        // 2. alter: true sincronizará la nueva estructura sin los bugs de los índices
-        await sequelize.sync({ alter: true });
-        console.log('[Database] ✅ Sincronización con la base de datos completada exitosamente.');
+        // 🔥 SOLUCIÓN PRODUCCIÓN: Apagamos alter: true y borramos cleanGarbageIndexes.
+        // Esto evita que Sequelize bloquee la base de datos o intente borrar/crear 
+        // índices a la fuerza en cada reinicio, salvando muchísimo rendimiento.
+        await sequelize.sync({ alter: false });
+        console.log('[Database] ✅ Sincronización con la base de datos completada (alter: false).');
     } catch (error) {
         console.error('[Database] ❌ Error al sincronizar la base de datos:', error);
         throw error;

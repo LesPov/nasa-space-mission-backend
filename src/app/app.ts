@@ -1,16 +1,17 @@
+
 // src/app/app.ts
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
-import client from '../infrastructure/chatbot/chatbot.client';
-// --- Importaciones de Infraestructura y Servicios/Rutas ---
-// ¡Importamos ambas funciones por separado para un control explícito!
+import { initializeChatbot } from '../infrastructure/chatbot/chatbot.client'; // 🔥 Cambiamos el import
 import { defineDatabaseAssociations, syncDatabase } from '../infrastructure/database/connection';
 import AuthService from '../features/auth/services/auth.service';
 import EpisodeService from '../features/episodes/services/episodeService';
 import assetRoutes from '../features/episodes/routes/assetRoutes';
+import prefabRoutes from '../features/episodes/routes/prefabRoutes'; 
+import { errorMiddleware } from '../infrastructure/middleware/error.middleware'; 
 
 dotenv.config();
 
@@ -21,37 +22,28 @@ class Server {
     constructor() {
         this.app = express();
         this.port = process.env.PORT || '4000';
-        this.initializeServer(); // Renombrado para mayor claridad
+        this.initializeServer(); 
     }
 
-    /**
-     * Orquesta el arranque del servidor de forma secuencial y robusta.
-     * Este es el NUEVO patrón de inicialización.
-     */
     private async initializeServer(): Promise<void> {
         try {
             console.log("[Server] Iniciando secuencia de arranque...");
-
-            // 1. Definir asociaciones de modelos.
-            // Esto es necesario ANTES de sincronizar.
             defineDatabaseAssociations();
-
-            // 2. Sincronizar la base de datos.
-            // Si esto falla, la aplicación se detendrá aquí mismo.
             await syncDatabase();
-
-            // 3. Configurar middlewares (CORS, JSON, etc.).
             this.configureMiddlewares();
-
-            // 4. Configurar y montar las rutas.
             this.configureRoutes();
-
-            // 5. Iniciar el servidor para escuchar peticiones.
+            
+            // Levantamos el puerto HTTP primero
             this.startListening();
 
+            // 🔥 AISLAMIENTO: Iniciamos el bot SIN 'await'. 
+            // De esta forma corre en un proceso en segundo plano (background). 
+            // Si Puppeteer colapsa, el servidor Express (API) seguirá funcionando intacto.
+            initializeChatbot();
+
         } catch (error) {
-            console.error("❌ Fallo crítico durante el arranque del servidor. La aplicación se detendrá.", error);
-            process.exit(1); // Detiene el proceso si la BD no se puede sincronizar
+            console.error("❌ Fallo crítico durante el arranque del servidor.", error);
+            process.exit(1); 
         }
     }
 
@@ -79,25 +71,22 @@ class Server {
 
         const uploadsPath = path.resolve(process.cwd(), 'uploads');
         this.app.use('/uploads', express.static(uploadsPath));
-
-        console.log("[Server] Middlewares configurados.");
     }
 
     private configureRoutes(): void {
-        // Inicializar los servicios que contienen los routers
         const authService = new AuthService();
         const episodeService = new EpisodeService();
 
-        // Montar las rutas
         this.app.use('/auth/user', authService.getRouter());
         this.app.use('/api/episodes', episodeService.getRouter());
         this.app.use('/api/assets', assetRoutes);
+        this.app.use('/api/prefabs', prefabRoutes);
 
         this.app.get('/health', (_req: Request, res: Response) => {
             res.status(200).json({ status: 'ok', message: 'Server is healthy' });
         });
 
-        console.log("[Server] Rutas configuradas.");
+        this.app.use(errorMiddleware);
     }
 
     private startListening(): void {
@@ -107,5 +96,4 @@ class Server {
     }
 }
 
-// Inicia el servidor
 new Server();
