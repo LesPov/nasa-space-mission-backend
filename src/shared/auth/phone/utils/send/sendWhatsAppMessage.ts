@@ -1,18 +1,18 @@
-import whatsappClient from '../../../../../infrastructure/chatbot/chatbot.client';
 
-// Función para enviar mensaje de WhatsApp
+import { getWhatsappClient } from '../../../../../infrastructure/chatbot/chatbot.client';
+
 export const sendWhatsAppMessage = async (phoneNumber: string, message: string): Promise<void> => {
     try {
-        // Asegúrate de que el número de teléfono esté en el formato correcto
-        const formattedNumber = `${phoneNumber.replace(/[-+()\s]/g, '')}@c.us`; // Formato internacional de WhatsApp ID
+        const formattedNumber = `${phoneNumber.replace(/[-+()\s]/g, '')}@c.us`; 
+        
+        // Obtenemos la instancia en tiempo de ejecución de manera segura
+        const whatsappClient = getWhatsappClient();
 
-
-        // Enviar el mensaje
         await whatsappClient.sendMessage(formattedNumber, message);
-
         console.log('Mensaje enviado con éxito a:', phoneNumber);
-    } catch (error) {
-        console.error('Error al enviar mensaje por WhatsApp:', error);
+
+    } catch (error: any) {
+        console.error('Error al enviar mensaje por WhatsApp:', error.message || error);
         throw new Error('Failed to send WhatsApp message');
     }
 };

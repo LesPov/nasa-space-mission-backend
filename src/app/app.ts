@@ -5,7 +5,7 @@ import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
-import { initializeChatbot } from '../infrastructure/chatbot/chatbot.client'; // 🔥 Cambiamos el import
+import { initializeChatbot } from '../infrastructure/chatbot/chatbot.client';
 import { defineDatabaseAssociations, syncDatabase } from '../infrastructure/database/connection';
 import AuthService from '../features/auth/services/auth.service';
 import EpisodeService from '../features/episodes/services/episodeService';
@@ -27,19 +27,17 @@ class Server {
 
     private async initializeServer(): Promise<void> {
         try {
-            console.log("[Server] Iniciando secuencia de arranque...");
+            console.log("[Server] Iniciando secuencia de arranque rápido...");
+            
             defineDatabaseAssociations();
+            // Esto ahora será mucho más veloz y seguro.
             await syncDatabase();
+            
             this.configureMiddlewares();
             this.configureRoutes();
             
-            // Levantamos el puerto HTTP primero
+            // Levantamos el puerto HTTP inmediatamente antes de cualquier proceso pesado
             this.startListening();
-
-            // 🔥 AISLAMIENTO: Iniciamos el bot SIN 'await'. 
-            // De esta forma corre en un proceso en segundo plano (background). 
-            // Si Puppeteer colapsa, el servidor Express (API) seguirá funcionando intacto.
-            initializeChatbot();
 
         } catch (error) {
             console.error("❌ Fallo crítico durante el arranque del servidor.", error);
@@ -91,7 +89,13 @@ class Server {
 
     private startListening(): void {
         this.app.listen(this.port, () => {
-            console.log(`🚀 [Server] Servidor escuchando en el puerto ${this.port}`);
+            console.log(`🚀 [Server] Servidor API Express escuchando en el puerto ${this.port}`);
+            
+            // 🔥 AISLAMIENTO TOTAL: Postergamos la carga de Puppeteer y Chromium.
+            // Le damos un respiro al Event Loop de 2 segundos para que el Frontend ya pueda conectarse.
+            setTimeout(() => {
+                initializeChatbot().catch(err => console.error("Error en background bot:", err));
+            }, 2000);
         });
     }
 }

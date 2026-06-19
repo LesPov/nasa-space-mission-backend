@@ -13,50 +13,52 @@ import { userProfileModel } from "../../features/profiles/models/userProfileMode
 import { PrefabModel } from "../../features/episodes/models/prefabModel"; 
 
 export const defineDatabaseAssociations = () => {
-    // Auth -> Perfil, Verificación
     AuthModel.hasOne(userProfileModel, { foreignKey: 'userId', as: 'profile', onDelete: 'CASCADE' });
     userProfileModel.belongsTo(AuthModel, { foreignKey: 'userId' });
     AuthModel.hasOne(VerificationModel, { foreignKey: 'userId', as: 'verification', onDelete: 'CASCADE' });
     VerificationModel.belongsTo(AuthModel, { foreignKey: 'userId' });
 
-    // Auth (Admin) -> Episodios 
     AuthModel.hasMany(EpisodeModel, { foreignKey: 'authorId', as: 'createdEpisodes' });
     EpisodeModel.belongsTo(AuthModel, { as: 'author', foreignKey: 'authorId' });
 
-    // Episodio -> Contenido (El Mapa y los Triggers)
     EpisodeModel.hasMany(SceneObjectModel, { foreignKey: 'episodeId', as: 'sceneObjects', onDelete: 'CASCADE' });
     SceneObjectModel.belongsTo(EpisodeModel, { foreignKey: 'episodeId' });
     
     EpisodeModel.hasMany(TriggerModel, { foreignKey: 'episodeId', as: 'triggers', onDelete: 'CASCADE' });
     TriggerModel.belongsTo(EpisodeModel, { foreignKey: 'episodeId' });
 
-    // SceneObject -> Asset (Modelos 3D y Sonidos)
     AssetModel.hasMany(SceneObjectModel, { foreignKey: 'assetId' });
     SceneObjectModel.belongsTo(AssetModel, { foreignKey: 'assetId', as: 'asset' });
 
-    // Prefabs GLOBALES -> Asset (Modelos 3D y Texturas)
     AssetModel.hasMany(PrefabModel, { foreignKey: 'assetId' });
     PrefabModel.belongsTo(AssetModel, { foreignKey: 'assetId', as: 'asset' });
 
-    // Jugador -> Progreso (Partidas Guardadas)
     AuthModel.hasMany(PlayerStateModel, { foreignKey: 'userId', as: 'savedGames', onDelete: 'CASCADE' });
     PlayerStateModel.belongsTo(AuthModel, { foreignKey: 'userId' });
     
     EpisodeModel.hasMany(PlayerStateModel, { foreignKey: 'episodeId', as: 'playerStates', onDelete: 'CASCADE' });
     PlayerStateModel.belongsTo(EpisodeModel, { foreignKey: 'episodeId' });
 
-    console.log("[Database] Asociaciones de modelos definidas para el Game Engine.");
+    console.log("[Database] Asociaciones de modelos definidas.");
 };
 
 export const syncDatabase = async () => {
     try {
-        // 🔥 SOLUCIÓN PRODUCCIÓN: Apagamos alter: true y borramos cleanGarbageIndexes.
-        // Esto evita que Sequelize bloquee la base de datos o intente borrar/crear 
-        // índices a la fuerza en cada reinicio, salvando muchísimo rendimiento.
+        // 🔥 VALIDACIÓN ULTRA RÁPIDA: Solo conectamos y verificamos credenciales.
+        await sequelize.authenticate();
+        console.log('[Database] ✅ Conexión a la base de datos establecida.');
+
+        // 🔥 AISLAMIENTO PRODUCCIÓN: Salto de sincronización para evitar queries pesadas y bloqueos
+        if (process.env.NODE_ENV === 'production' && process.env.FORCE_DB_SYNC !== 'true') {
+            console.log('[Database] 🛡️ Modo Producción Activo: Saltando sincronización de esquemas (Arranque Veloz).');
+            return;
+        }
+
+        // Modo Desarrollo: Sincronización normal
         await sequelize.sync({ alter: false });
-        console.log('[Database] ✅ Sincronización con la base de datos completada (alter: false).');
+        console.log('[Database] ✅ Sincronización de esquemas de desarrollo completada (alter: false).');
     } catch (error) {
-        console.error('[Database] ❌ Error al sincronizar la base de datos:', error);
+        console.error('[Database] ❌ Error al inicializar la base de datos:', error);
         throw error;
     }
 };
