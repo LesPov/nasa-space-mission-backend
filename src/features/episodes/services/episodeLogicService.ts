@@ -1,3 +1,4 @@
+
 import { EpisodeModel } from '../models/episodeModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
@@ -45,6 +46,7 @@ class EpisodeLogicService {
     public async saveFullMap(episodeId: number, sceneObjectsArray: any[], triggersArray: any[], worldSettings: any) {
         const transaction = await sequelize.transaction();
         try {
+            // 1. Guardar settings globales
             if (worldSettings) {
                 await EpisodeModel.update(
                     { worldSettings: worldSettings },
@@ -52,58 +54,118 @@ class EpisodeLogicService {
                 );
             }
 
-            // 1. Limpiamos el mapa actual
-            await SceneObjectModel.destroy({ where: { episodeId }, transaction });
-            await TriggerModel.destroy({ where: { episodeId }, transaction });
+            // 2. Extraer el estado actual de la base de datos (Solo IDs y UIDs para ser ultrarrápido)
+            const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { episodeId }, transaction });
+            const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { episodeId }, transaction });
 
-            // 2. Preparamos los objetos de escena con UID
-            const objectsToInsert = (sceneObjectsArray || []).map(obj => ({
-                episodeId: episodeId,
-                uid: obj.uid || crypto.randomUUID(), // Genera un ID único nativo si no viene
-                type: obj.type,
-                name: obj.name,
-                parentId: obj.parentId || null,
-                position: obj.position,
-                rotation: obj.rotation,
-                scale: obj.scale,
-                properties: obj.properties || {},
-                assetId: obj.assetId || null
-            }));
+            // Diccionarios para cruzar UID del frontend con el ID numérico de la BD
+            const existingObjMap = new Map(existingObjects.map(o => [o.getDataValue('uid'), o.getDataValue('id')]));
+            const existingTriggerMap = new Map(existingTriggers.map(t => [t.getDataValue('uid'), t.getDataValue('id')]));
 
-            // 3. Preparamos los Triggers con UID
-            const triggersToInsert = (triggersArray || []).map(trigger => ({
-                episodeId: episodeId,
-                uid: trigger.uid || crypto.randomUUID(), // Genera un ID único nativo si no viene
-                name: trigger.name,
-                parentId: trigger.parentId || null,
-                position: trigger.position,
-                size: trigger.scale || trigger.size,
-                condition: trigger.properties?.condition || trigger.condition || 'on_enter',
-                actionType: trigger.properties?.actionType || trigger.actionType || 'show_message',
-                targetObjectName: trigger.properties?.targetObjectName || trigger.targetObjectName || '',
-                actionProperties: trigger.properties || trigger.actionProperties || {},
-                isRepeatable: trigger.properties?.isRepeatable ?? trigger.isRepeatable ?? false,
-                isEnabled: trigger.properties?.isEnabled ?? trigger.isEnabled ?? true
-            }));
+            const incomingObjUids = new Set<string>();
+            const incomingTriggerUids = new Set<string>();
 
-            // 4. Inserción masiva
-            if (objectsToInsert.length > 0) {
-                await SceneObjectModel.bulkCreate(objectsToInsert, { transaction });
+            // 3. Preparar Objetos (Upsert Format)
+            const objectsToUpsert = (sceneObjectsArray || []).map(obj => {
+                const finalUid = obj.uid || crypto.randomUUID();
+                incomingObjUids.add(finalUid);
+                
+                const dbObj: any = {
+                    episodeId: episodeId,
+                    uid: finalUid,
+                    type: obj.type,
+                    name: obj.name,
+                    parentId: obj.parentId || null,
+                    position: obj.position,
+                    rotation: obj.rotation,
+                    scale: obj.scale,
+                    properties: obj.properties || {},
+                    assetId: obj.assetId || null
+                };
+                
+                // Si el objeto ya existe en la BD, le inyectamos su Primary Key
+                if (existingObjMap.has(finalUid)) {
+                    dbObj.id = existingObjMap.get(finalUid);
+                }
+                
+                return dbObj;
+            });
+
+            // 4. Preparar Triggers (Upsert Format)
+            const triggersToUpsert = (triggersArray || []).map(trigger => {
+                const finalUid = trigger.uid || crypto.randomUUID();
+                incomingTriggerUids.add(finalUid);
+                
+                const dbTrigger: any = {
+                    episodeId: episodeId,
+                    uid: finalUid,
+                    name: trigger.name,
+                    parentId: trigger.parentId || null,
+                    position: trigger.position,
+                    size: trigger.scale || trigger.size,
+                    condition: trigger.properties?.condition || trigger.condition || 'on_enter',
+                    actionType: trigger.properties?.actionType || trigger.actionType || 'show_message',
+                    targetObjectName: trigger.properties?.targetObjectName || trigger.targetObjectName || '',
+                    actionProperties: trigger.properties || trigger.actionProperties || {},
+                    isRepeatable: trigger.properties?.isRepeatable ?? trigger.isRepeatable ?? false,
+                    isEnabled: trigger.properties?.isEnabled ?? trigger.isEnabled ?? true
+                };
+
+                // Inyectamos Primary Key si ya existía
+                if (existingTriggerMap.has(finalUid)) {
+                    dbTrigger.id = existingTriggerMap.get(finalUid);
+                }
+
+                return dbTrigger;
+            });
+
+            // 5. Detectar qué elementos fueron borrados desde el frontend
+            const idsToDeleteObjects = existingObjects
+                .filter(o => !incomingObjUids.has(o.getDataValue('uid')))
+                .map(o => o.getDataValue('id'));
+
+            const idsToDeleteTriggers = existingTriggers
+                .filter(t => !incomingTriggerUids.has(t.getDataValue('uid')))
+                .map(t => t.getDataValue('id'));
+
+            // 6. Ejecutar queries en bloque
+            
+            // A) Borrar lo que ya no existe
+            if (idsToDeleteObjects.length > 0) {
+                await SceneObjectModel.destroy({ where: { id: idsToDeleteObjects }, transaction });
             }
-            if (triggersToInsert.length > 0) {
-                await TriggerModel.bulkCreate(triggersToInsert, { transaction });
+            if (idsToDeleteTriggers.length > 0) {
+                await TriggerModel.destroy({ where: { id: idsToDeleteTriggers }, transaction });
+            }
+
+            // B) Upsert (Inserta nuevos o Actualiza los existentes en base a la PK "id")
+            if (objectsToUpsert.length > 0) {
+                await SceneObjectModel.bulkCreate(objectsToUpsert, { 
+                    updateOnDuplicate: ['type', 'name', 'parentId', 'position', 'rotation', 'scale', 'properties', 'assetId'], 
+                    transaction 
+                });
             }
             
+            if (triggersToUpsert.length > 0) {
+                await TriggerModel.bulkCreate(triggersToUpsert, { 
+                    updateOnDuplicate: ['name', 'parentId', 'position', 'size', 'condition', 'actionType', 'targetObjectName', 'actionProperties', 'isRepeatable', 'isEnabled'], 
+                    transaction 
+                });
+            }
+
             await transaction.commit();
+            
             return { 
-                message: "Mapa, Triggers y Entorno guardados correctamente", 
-                totalObjects: objectsToInsert.length,
-                totalTriggers: triggersToInsert.length
+                message: "Mapa guardado eficientemente mediante Deltas", 
+                totalObjects: objectsToUpsert.length,
+                totalTriggers: triggersToUpsert.length,
+                deletedObjects: idsToDeleteObjects.length,
+                deletedTriggers: idsToDeleteTriggers.length
             };
 
         } catch (error) {
             await transaction.rollback();
-            console.error("Error guardando el mapa, entorno y los triggers:", error);
+            console.error("Error guardando el mapa (Upsert):", error);
             throw new Error("No se pudo guardar el mapa");
         }
     }
