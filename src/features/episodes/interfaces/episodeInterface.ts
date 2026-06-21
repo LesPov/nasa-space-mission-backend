@@ -15,18 +15,15 @@ export interface EpisodeInterface {
     isPublished: boolean;
     authorId: number;
     analysisState: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-
-    // Este campo determinará qué script de Python se debe ejecutar.
-    analysisType: AnalysisType;
+    analysisType: string;
     
-    // 🔥 AÑADIDO: Guardar los datos del entorno 3D (cielo, gravedad, luz, niebla)
     worldSettings?: any; 
+    uiSettings?: any; // 🔥 NUEVO: Configuración visual del Modal y Objetivos
     
-    triggers?: TriggerInterface[]; // Opcional, solo para respuestas completas
+    triggers?: any[]; 
     createdAt?: Date;
     updatedAt?: Date;
 }
-
 // Interfaz para la respuesta paginada al obtener un episodio completo
 export interface PaginatedEpisodeResponse {
     episode: EpisodeInterface;

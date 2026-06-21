@@ -1,4 +1,3 @@
-// src/app/features/episodes/models/playerStateModel.ts
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
 import { PlayerStateInterface } from '../interfaces/playerStateInterface';
@@ -54,3 +53,8 @@ export const PlayerStateModel = sequelize.define<Model<PlayerStateInterface, Pla
         }
     ]
 });
+
+// 🔥 FIX: Sincronizar automáticamente la tabla de estado del jugador para evitar el Error 500 al entrar
+PlayerStateModel.sync({ alter: true })
+    .then(() => console.log('[PlayerStateModel] Tabla sincronizada correctamente'))
+    .catch(err => console.error('[PlayerStateModel] Error en sincronización:', err));

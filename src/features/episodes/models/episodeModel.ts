@@ -1,3 +1,4 @@
+
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
 
@@ -28,18 +29,28 @@ export const EpisodeModel = sequelize.define('Episode', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    // El JSON donde guardarás el árbol de diálogos y eventos de la historia
     dialogueGraph: {
         type: DataTypes.JSON,
         allowNull: true,
         defaultValue: {},
         comment: 'JSON exportado desde el Editor de Diálogos de Angular'
-    },
-    // 🔥 AÑADIDO: Guardar configuraciones del entorno (Babylon.js)
+    },  
     worldSettings: {
         type: DataTypes.JSON,
         allowNull: true,
         defaultValue: {},
         comment: 'Configuración global del entorno (cielo, gravedad, niebla, luz)'
-    }
+    },
+    uiSettings: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {},
+        comment: 'Configuración visual del Modal de Misión y Objetivos'
+    },
 }, { tableName: 'episodes', timestamps: true });
+
+// 🔥 FIX CRÍTICO: Sincronizar la tabla automáticamente para evitar ER_BAD_FIELD_ERROR
+// Esto añade la columna uiSettings a las bases de datos antiguas sin borrar datos.
+EpisodeModel.sync({ alter: true })
+    .then(() => console.log('[EpisodeModel] Tabla sincronizada correctamente (alter: true)'))
+    .catch(err => console.error('[EpisodeModel] Error en sincronización:', err));

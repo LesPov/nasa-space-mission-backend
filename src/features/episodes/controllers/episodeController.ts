@@ -66,18 +66,20 @@ class EpisodeController {
 
     public async saveMap(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            // 🔥 Validación de DTO antes de tocar la Lógica de Negocio o Base de Datos
             validateSaveMapDTO(req.body);
 
-            const { sceneObjectsDelta, triggersDelta, deletedObjects, deletedTriggers, worldSettings } = req.body;
+            const { sceneObjectsDelta, triggersDelta, deletedObjects, deletedTriggers, worldSettings, uiSettings, title, description } = req.body;
             
             const response = await EpisodeLogicService.saveFullMap(
-                Number(req.params.id), 
-                sceneObjectsDelta || [], 
-                triggersDelta || [], 
-                deletedObjects || [], 
-                deletedTriggers || [], 
-                worldSettings
+                Number(req.params.id),
+                sceneObjectsDelta || [],
+                triggersDelta || [],
+                deletedObjects || [],
+                deletedTriggers || [],
+                worldSettings,
+                uiSettings,
+                title,
+                description
             );
             
             res.status(200).json(response);

@@ -1,13 +1,12 @@
+
 import { Router } from 'express';
 import SceneObjectController from '../controllers/sceneObjectController';
-import { UserRole } from '../../../infrastructure/middleware/common/enums';
-import validateRole from '../../../infrastructure/middleware/validateRole/validateRole';
 import validateToken from '../../../infrastructure/middleware/valdiateToken/validateToken';
 
+// mergeParams: true es obligatorio porque esta ruta se anida dentro de /episodes/:episodeId/
 const sceneObjectRoutes = Router({ mergeParams: true });
-const adminOnly = [validateToken, validateRole(UserRole.Admin)];
 
-// Solo lectura individual (la escritura masiva la hace EpisodeRoutes)
-sceneObjectRoutes.get('/:objectId', adminOnly, SceneObjectController.getObjectById);
+// Permitimos a cualquier usuario logueado (jugador o admin) consultar un objeto individual si el Frontend lo llega a pedir
+sceneObjectRoutes.get('/:objectId', validateToken, SceneObjectController.getObjectById);
 
 export default sceneObjectRoutes;

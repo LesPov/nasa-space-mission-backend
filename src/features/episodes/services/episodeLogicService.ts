@@ -1,4 +1,3 @@
-
 import { EpisodeModel } from '../models/episodeModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
@@ -39,22 +38,26 @@ class EpisodeLogicService {
             episode: episodeData,
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
-            worldSettings: episodeData.worldSettings || {} 
+            worldSettings: episodeData.worldSettings || {},
+            // 🔥 FIX: Exponemos uiSettings en la raíz para que el SceneLoader de Babylon lo encuentre
+            uiSettings: episodeData.uiSettings || {}
         };
     }
 
-    public async saveFullMap(episodeId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], worldSettings: any) {
-        const transaction = await sequelize.transaction();
-        try {
-            // 1. Guardar settings globales
-            if (worldSettings) {
-                await EpisodeModel.update(
-                    { worldSettings: worldSettings },
-                    { where: { id: episodeId }, transaction }
-                );
-            }
+   public async saveFullMap(episodeId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], worldSettings: any, uiSettings: any, title?: string, description?: string) {
+    const transaction = await sequelize.transaction();
+    try {
+        // 1. Guardar settings globales y UI
+        const updateData: any = {};
+        if (worldSettings) updateData.worldSettings = worldSettings;
+        if (uiSettings) updateData.uiSettings = uiSettings; 
+        if (title !== undefined) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
 
-            // 2. Ejecutar Eliminaciones Explícitas primero (para evitar colisiones de IDs si se recrean)
+        if (Object.keys(updateData).length > 0) {
+            await EpisodeModel.update(updateData, { where: { id: episodeId }, transaction });
+        }
+            // 2. Ejecutar Eliminaciones Explícitas primero
             if (deletedObjects.length > 0) {
                 await SceneObjectModel.destroy({ where: { episodeId, uid: deletedObjects }, transaction });
             }
@@ -62,7 +65,7 @@ class EpisodeLogicService {
                 await TriggerModel.destroy({ where: { episodeId, uid: deletedTriggers }, transaction });
             }
 
-            // 3. Extraer IDs numéricos solo de los UIDs que vienen en el Delta
+            // 3. Extraer IDs numéricos
             const incomingObjUids = sceneObjectsDelta.map(o => o.uid).filter(Boolean);
             const incomingTriggerUids = triggersDelta.map(t => t.uid).filter(Boolean);
 
@@ -123,7 +126,7 @@ class EpisodeLogicService {
                 return dbTrigger;
             });
 
-            // 6. Ejecutar Upserts Masivos (Ahora solo sobre lo modificado)
+            // 6. Ejecutar Upserts Masivos
             if (objectsToUpsert.length > 0) {
                 await SceneObjectModel.bulkCreate(objectsToUpsert, { 
                     updateOnDuplicate: ['type', 'name', 'parentId', 'position', 'rotation', 'scale', 'properties', 'assetId'], 
