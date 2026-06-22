@@ -1,4 +1,3 @@
-
 import { NextFunction, Request, Response } from 'express';
 import upload from '../../../infrastructure/uploadsfiles/uploadConfig';
 import { Op } from 'sequelize';
@@ -16,7 +15,7 @@ const handleImageUpload = (req: Request, res: Response, callback: (err?: any) =>
     });
 };
 
-export const validateCampesinoPersonalData = (firstName: string, lastName: string, birthDate: string, gender: string, profilePicture?: string): string[] => {
+export const validatePersonalData = (firstName: string, lastName: string, birthDate: string, gender: string, profilePicture?: string): string[] => {
     const errors: string[] = [];
     if (!firstName || !lastName || !birthDate || !gender) {
         errors.push(errorMessages.requiredFields);
@@ -37,10 +36,10 @@ export const updateProfileController = async (req: Request, res: Response, next:
                 throw new AppError('Usuario no autenticado', 401);
             }
 
-            const { firstName, lastName, identificationNumber, identificationType, biography, direccion, birthDate, gender, campiamigo } = req.body;
+            const { firstName, lastName, identificationNumber, identificationType, biography, direccion, birthDate, gender } = req.body;
             const profilePicture: string | undefined = req.file?.filename;
 
-            const validationErrors = validateCampesinoPersonalData(firstName, lastName, birthDate, gender, profilePicture);
+            const validationErrors = validatePersonalData(firstName, lastName, birthDate, gender, profilePicture);
             if (validationErrors.length > 0) {
                 throw new AppError(validationErrors.join(', '), 400, 'Error en la validación de la entrada de datos');
             }
@@ -64,9 +63,6 @@ export const updateProfileController = async (req: Request, res: Response, next:
 
             const updateData: any = { firstName, lastName, biography, direccion, birthDate, gender };
 
-            if ('campiamigo' in req.body) {
-                updateData.campiamigo = campiamigo === true || campiamigo === 'true';
-            }
             if (identificationNumber) updateData.identificationNumber = identificationNumber;
             if (identificationType) updateData.identificationType = identificationType;
             if (profilePicture) updateData.profilePicture = profilePicture;

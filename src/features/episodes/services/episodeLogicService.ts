@@ -1,6 +1,10 @@
+
 import { EpisodeModel } from '../models/episodeModel';
+import { EpisodeVersionModel } from '../models/episodeVersionModel';
+import { SceneModel } from '../models/sceneModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
+import { SceneConnectionModel } from '../models/sceneConnectionModel';
 import sequelize from '../../../infrastructure/database/config';
 import crypto from 'crypto';
 
@@ -14,58 +18,98 @@ class EpisodeLogicService {
     }
 
     public async createEpisode(data: { title: string; description?: string }, authorId: number) {
-        const newEpisode = await EpisodeModel.create({
-            title: data.title,
-            description: data.description || '',
-            authorId: authorId,
-            isPublished: false,
-            dialogueGraph: {},
-            worldSettings: {}
-        });
-        return newEpisode.toJSON();
+        const transaction = await sequelize.transaction();
+        try {
+            const newEpisode = await EpisodeModel.create({
+                title: data.title,
+                description: data.description || '',
+                authorId: authorId,
+            }, { transaction });
+
+            const newVersion = await EpisodeVersionModel.create({
+                episodeId: newEpisode.getDataValue('id'),
+                versionNumber: 1,
+                status: 'DRAFT' as any,
+                changelog: 'Initial Creation'
+            }, { transaction });
+
+            const initialScene = await SceneModel.create({
+                episodeVersionId: newVersion.getDataValue('id'),
+                name: 'Main Platform',
+                environmentSettings: {},
+                spawnPoint: { x: 0, y: 0, z: 0 },
+                isInitialScene: true
+            }, { transaction });
+
+            await transaction.commit();
+            return {
+                episode: newEpisode.toJSON(),
+                version: newVersion.toJSON(),
+                initialScene: initialScene.toJSON()
+            };
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
 
-    public async getEpisodeFullData(episodeId: number) {
-        const episode = await EpisodeModel.findByPk(episodeId);
-        if (!episode) throw new Error("Episodio no encontrado");
+    public async getScenesByEpisode(episodeId: number) {
+        const version = await EpisodeVersionModel.findOne({ where: { episodeId, status: 'DRAFT' } });
+        if (!version) throw new Error("Versión DRAFT no encontrada");
+        const scenes = await SceneModel.findAll({ 
+            where: { episodeVersionId: version.getDataValue('id') },
+            order: [['createdAt', 'ASC']]
+        });
+        return scenes.map(s => s.toJSON());
+    }
 
-        const sceneObjects = await SceneObjectModel.findAll({ where: { episodeId } });
-        const triggers = await TriggerModel.findAll({ where: { episodeId } });
+    public async createScene(episodeId: number, name: string) {
+        const version = await EpisodeVersionModel.findOne({ where: { episodeId, status: 'DRAFT' } });
+        if (!version) throw new Error("Versión DRAFT no encontrada");
+        const newScene = await SceneModel.create({
+            episodeVersionId: version.getDataValue('id'),
+            name: name,
+            environmentSettings: {},
+            spawnPoint: { x: 0, y: 0, z: 0 },
+            isInitialScene: false
+        });
+        return newScene.toJSON();
+    }
 
-        const episodeData = episode.toJSON() as any;
+    public async getSceneFullData(sceneId: number) {
+        const scene = await SceneModel.findByPk(sceneId);
+        if (!scene) throw new Error("Escena/Plataforma no encontrada");
+
+        const sceneObjects = await SceneObjectModel.findAll({ where: { sceneId } });
+        const triggers = await TriggerModel.findAll({ where: { sceneId } });
+        const connections = await SceneConnectionModel.findAll({ where: { sourceSceneId: sceneId } });
 
         return {
-            episode: episodeData,
+            scene: scene.toJSON(),
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
-            worldSettings: episodeData.worldSettings || {},
-            // 🔥 FIX: Exponemos uiSettings en la raíz para que el SceneLoader de Babylon lo encuentre
-            uiSettings: episodeData.uiSettings || {}
+            connections: connections.map(c => c.toJSON())
         };
     }
 
-   public async saveFullMap(episodeId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], worldSettings: any, uiSettings: any, title?: string, description?: string) {
-    const transaction = await sequelize.transaction();
-    try {
-        // 1. Guardar settings globales y UI
-        const updateData: any = {};
-        if (worldSettings) updateData.worldSettings = worldSettings;
-        if (uiSettings) updateData.uiSettings = uiSettings; 
-        if (title !== undefined) updateData.title = title;
-        if (description !== undefined) updateData.description = description;
+   public async saveSceneMap(sceneId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], environmentSettings: any, spawnPoint: any) {
+        const transaction = await sequelize.transaction();
+        try {
+            const updateData: any = {};
+            if (environmentSettings) updateData.environmentSettings = environmentSettings;
+            if (spawnPoint) updateData.spawnPoint = spawnPoint; 
 
-        if (Object.keys(updateData).length > 0) {
-            await EpisodeModel.update(updateData, { where: { id: episodeId }, transaction });
-        }
-            // 2. Ejecutar Eliminaciones Explícitas primero
+            if (Object.keys(updateData).length > 0) {
+                await SceneModel.update(updateData, { where: { id: sceneId }, transaction });
+            }
+
             if (deletedObjects.length > 0) {
-                await SceneObjectModel.destroy({ where: { episodeId, uid: deletedObjects }, transaction });
+                await SceneObjectModel.destroy({ where: { sceneId, uid: deletedObjects }, transaction });
             }
             if (deletedTriggers.length > 0) {
-                await TriggerModel.destroy({ where: { episodeId, uid: deletedTriggers }, transaction });
+                await TriggerModel.destroy({ where: { sceneId, uid: deletedTriggers }, transaction });
             }
 
-            // 3. Extraer IDs numéricos
             const incomingObjUids = sceneObjectsDelta.map(o => o.uid).filter(Boolean);
             const incomingTriggerUids = triggersDelta.map(t => t.uid).filter(Boolean);
 
@@ -73,20 +117,19 @@ class EpisodeLogicService {
             let existingTriggerMap = new Map();
 
             if (incomingObjUids.length > 0) {
-                const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { episodeId, uid: incomingObjUids }, transaction });
+                const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { sceneId, uid: incomingObjUids }, transaction });
                 existingObjMap = new Map(existingObjects.map(o => [o.getDataValue('uid'), o.getDataValue('id')]));
             }
 
             if (incomingTriggerUids.length > 0) {
-                const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { episodeId, uid: incomingTriggerUids }, transaction });
+                const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { sceneId, uid: incomingTriggerUids }, transaction });
                 existingTriggerMap = new Map(existingTriggers.map(t => [t.getDataValue('uid'), t.getDataValue('id')]));
             }
 
-            // 4. Preparar Objetos para Upsert
             const objectsToUpsert = (sceneObjectsDelta || []).map(obj => {
                 const finalUid = obj.uid || crypto.randomUUID();
                 const dbObj: any = {
-                    episodeId: episodeId,
+                    sceneId: sceneId,
                     uid: finalUid,
                     type: obj.type,
                     name: obj.name,
@@ -103,11 +146,10 @@ class EpisodeLogicService {
                 return dbObj;
             });
 
-            // 5. Preparar Triggers para Upsert
             const triggersToUpsert = (triggersDelta || []).map(trigger => {
                 const finalUid = trigger.uid || crypto.randomUUID();
                 const dbTrigger: any = {
-                    episodeId: episodeId,
+                    sceneId: sceneId,
                     uid: finalUid,
                     name: trigger.name,
                     parentId: trigger.parentId || null,
@@ -126,7 +168,6 @@ class EpisodeLogicService {
                 return dbTrigger;
             });
 
-            // 6. Ejecutar Upserts Masivos
             if (objectsToUpsert.length > 0) {
                 await SceneObjectModel.bulkCreate(objectsToUpsert, { 
                     updateOnDuplicate: ['type', 'name', 'parentId', 'position', 'rotation', 'scale', 'properties', 'assetId'], 
@@ -144,7 +185,7 @@ class EpisodeLogicService {
             await transaction.commit();
             
             return { 
-                message: "Mapa guardado eficientemente mediante Deltas Estrictos", 
+                message: "Plataforma/Escena guardada exitosamente", 
                 upsertedObjects: objectsToUpsert.length,
                 upsertedTriggers: triggersToUpsert.length,
                 deletedObjects: deletedObjects.length,
@@ -153,17 +194,9 @@ class EpisodeLogicService {
 
         } catch (error) {
             await transaction.rollback();
-            console.error("Error guardando el mapa (Upsert Parcial):", error);
-            throw new Error("No se pudo guardar el mapa de forma incremental");
+            console.error("Error guardando escena:", error);
+            throw new Error("No se pudo guardar la plataforma/escena de forma incremental");
         }
-    }
-
-    public async saveDialogueGraph(episodeId: number, dialogueJson: any) {
-        const episode = await EpisodeModel.findByPk(episodeId);
-        if (!episode) throw new Error("Episodio no encontrado"); 
-
-        await episode.update({ dialogueGraph: dialogueJson });
-        return { message: "Historia y diálogos guardados." };
     }
 }
 

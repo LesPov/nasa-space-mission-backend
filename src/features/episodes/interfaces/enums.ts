@@ -1,0 +1,25 @@
+export enum EpisodeVersionStatus {
+    DRAFT = 'DRAFT',
+    PUBLISHED = 'PUBLISHED',
+    DEPRECATED = 'DEPRECATED'
+}
+
+export enum SceneProgressStatus {
+    LOCKED = 'LOCKED',
+    ACTIVE = 'ACTIVE',
+    COMPLETED = 'COMPLETED'
+}
+
+export enum ActionType {
+    MUTATE_FLAG = 'MUTATE_FLAG',
+    PLAY_ANIMATION = 'PLAY_ANIMATION',
+    TELEPORT = 'TELEPORT',
+    GIVE_ITEM = 'GIVE_ITEM',
+    REMOVE_ITEM = 'REMOVE_ITEM'
+}
+
+export enum ConditionType {
+    HAS_FLAG = 'HAS_FLAG',
+    HAS_ITEM = 'HAS_ITEM',
+    SCENE_COMPLETED = 'SCENE_COMPLETED'
+}

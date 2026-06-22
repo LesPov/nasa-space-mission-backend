@@ -7,15 +7,15 @@ export const SceneObjectModel = sequelize.define('SceneObject', {
         primaryKey: true,
         autoIncrement: true,
     },
-    episodeId: {
+    sceneId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        comment: 'Ahora los objetos pertenecen a una Escena (Plataforma), no al Episodio'
     },
     uid: {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: DataTypes.UUIDV4,
-        comment: 'ID único del objeto en el Frontend (Babylon.js) para evitar cruces de nombres'
     },
     type: {
         type: DataTypes.STRING,
@@ -28,7 +28,6 @@ export const SceneObjectModel = sequelize.define('SceneObject', {
     parentId: {
         type: DataTypes.STRING,
         allowNull: true,
-        comment: 'Guarda el UID del objeto padre en lugar del nombre'
     },
     position: {
         type: DataTypes.JSON, 
@@ -45,7 +44,7 @@ export const SceneObjectModel = sequelize.define('SceneObject', {
     properties: {
         type: DataTypes.JSON,
         allowNull: true,
-        comment: 'Colores, intensidad de luz, configuraciones de cámara'
+        comment: 'Solo configuración visual y de físicas base'
     },
     assetId: {
         type: DataTypes.INTEGER,

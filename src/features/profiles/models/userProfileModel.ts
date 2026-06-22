@@ -1,6 +1,5 @@
 // models/userProfileModel.ts
 import { DataTypes } from "sequelize";
-
 import { UserProfileinterface } from "../interfaces/userProfileInterface";
 import sequelize from '../../../infrastructure/database/config';
   
@@ -67,11 +66,7 @@ export const userProfileModel = sequelize.define<UserProfileinterface>('userProf
     allowNull: false,
     defaultValue: 'pendiente',
   },
-  
- 
 }, {
   tableName: 'userProfile',
   timestamps: true,
 });
-
- 

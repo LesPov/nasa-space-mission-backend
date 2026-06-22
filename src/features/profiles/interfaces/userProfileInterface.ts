@@ -14,8 +14,7 @@ export interface UserProfileinterface extends Model {
   direccion: string | null;
   birthDate: string; // Formato YYYY-MM-DD
   gender: 'Mujer' | 'Hombre' | 'Otro género' | 'Prefiero no declarar';
-  status: 'Activado' | 'Desactivado'
-  campiamigo: boolean;
+  status: 'Activado' | 'Desactivado';
   zoneId: number | null; // Relación opcional con el modelo de zona
   auth?: AuthInterface; // Relación opcional con el modelo de autenticación
 }
