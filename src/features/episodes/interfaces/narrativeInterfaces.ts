@@ -42,12 +42,14 @@ export interface PlayerSceneStateInterface {
     status: SceneProgressStatus;
 }
 
+// 🔥 ACTUALIZADO: Adaptado al modelo formal y relacional con Tracks
 export interface CinematicInterface {
     id: number;
+    uid: string;
     sceneId: number;
     name: string;
-    duration: number;
-    timelineData: any;
+    durationMs: number;
+    tracks: any[];
 }
 
 export interface SequenceInterface {

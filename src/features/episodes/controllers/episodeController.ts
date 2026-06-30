@@ -1,4 +1,3 @@
-
 import { NextFunction, Request, Response } from 'express';
 import EpisodeLogicService from '../services/episodeLogicService';
 
@@ -50,14 +49,20 @@ class EpisodeController {
     public async saveSceneMap(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             validateSaveMapDTO(req.body);
-            const { sceneObjectsDelta, triggersDelta, deletedObjects, deletedTriggers, environmentSettings, spawnPoint } = req.body;
+            const { 
+                sceneObjectsDelta, triggersDelta, cinematicsDelta, 
+                deletedObjects, deletedTriggers, deletedCinematics, 
+                environmentSettings, spawnPoint 
+            } = req.body;
             
             const response = await EpisodeLogicService.saveSceneMap(
                 Number(req.params.sceneId),
                 sceneObjectsDelta || [],
                 triggersDelta || [],
+                cinematicsDelta || [],
                 deletedObjects || [],
                 deletedTriggers || [],
+                deletedCinematics || [],
                 environmentSettings,
                 spawnPoint
             );

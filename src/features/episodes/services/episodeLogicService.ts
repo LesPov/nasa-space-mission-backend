@@ -5,6 +5,7 @@ import { SceneModel } from '../models/sceneModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
 import { SceneConnectionModel } from '../models/sceneConnectionModel';
+import { CinematicModel } from '../models/narrativeModels'; // 🔥 AÑADIDO
 import sequelize from '../../../infrastructure/database/config';
 import crypto from 'crypto';
 
@@ -83,16 +84,28 @@ class EpisodeLogicService {
         const sceneObjects = await SceneObjectModel.findAll({ where: { sceneId } });
         const triggers = await TriggerModel.findAll({ where: { sceneId } });
         const connections = await SceneConnectionModel.findAll({ where: { sourceSceneId: sceneId } });
+        const cinematics = await CinematicModel.findAll({ where: { sceneId } }); // 🔥 AÑADIDO
 
         return {
             scene: scene.toJSON(),
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
-            connections: connections.map(c => c.toJSON())
+            connections: connections.map(c => c.toJSON()),
+            cinematics: cinematics.map(c => c.toJSON()) // 🔥 AÑADIDO
         };
     }
 
-   public async saveSceneMap(sceneId: number, sceneObjectsDelta: any[], triggersDelta: any[], deletedObjects: string[], deletedTriggers: string[], environmentSettings: any, spawnPoint: any) {
+   public async saveSceneMap(
+       sceneId: number, 
+       sceneObjectsDelta: any[], 
+       triggersDelta: any[], 
+       cinematicsDelta: any[], // 🔥 AÑADIDO
+       deletedObjects: string[], 
+       deletedTriggers: string[], 
+       deletedCinematics: string[], // 🔥 AÑADIDO
+       environmentSettings: any, 
+       spawnPoint: any
+    ) {
         const transaction = await sequelize.transaction();
         try {
             const updateData: any = {};
@@ -109,12 +122,19 @@ class EpisodeLogicService {
             if (deletedTriggers.length > 0) {
                 await TriggerModel.destroy({ where: { sceneId, uid: deletedTriggers }, transaction });
             }
+            if (deletedCinematics.length > 0) {
+                await CinematicModel.destroy({ where: { sceneId, uid: deletedCinematics }, transaction });
+            }
 
             const incomingObjUids = sceneObjectsDelta.map(o => o.uid).filter(Boolean);
             const incomingTriggerUids = triggersDelta.map(t => t.uid).filter(Boolean);
+            
+            // 🔥 FIX: Aceptamos que el ID del Frontend pueda venir en 'id' o 'uid'
+            const incomingCinUids = cinematicsDelta.map(c => c.uid || c.id).filter(Boolean);
 
             let existingObjMap = new Map();
             let existingTriggerMap = new Map();
+            let existingCinematicMap = new Map();
 
             if (incomingObjUids.length > 0) {
                 const existingObjects = await SceneObjectModel.findAll({ attributes: ['id', 'uid'], where: { sceneId, uid: incomingObjUids }, transaction });
@@ -124,6 +144,11 @@ class EpisodeLogicService {
             if (incomingTriggerUids.length > 0) {
                 const existingTriggers = await TriggerModel.findAll({ attributes: ['id', 'uid'], where: { sceneId, uid: incomingTriggerUids }, transaction });
                 existingTriggerMap = new Map(existingTriggers.map(t => [t.getDataValue('uid'), t.getDataValue('id')]));
+            }
+
+            if (incomingCinUids.length > 0) {
+                const existingCins = await CinematicModel.findAll({ attributes: ['id', 'uid'], where: { sceneId, uid: incomingCinUids }, transaction });
+                existingCinematicMap = new Map(existingCins.map(c => [c.getDataValue('uid'), c.getDataValue('id')]));
             }
 
             const objectsToUpsert = (sceneObjectsDelta || []).map(obj => {
@@ -140,9 +165,7 @@ class EpisodeLogicService {
                     properties: obj.properties || {},
                     assetId: obj.assetId || null
                 };
-                if (existingObjMap.has(finalUid)) {
-                    dbObj.id = existingObjMap.get(finalUid);
-                }
+                if (existingObjMap.has(finalUid)) dbObj.id = existingObjMap.get(finalUid);
                 return dbObj;
             });
 
@@ -162,10 +185,23 @@ class EpisodeLogicService {
                     isRepeatable: trigger.properties?.isRepeatable ?? trigger.isRepeatable ?? false,
                     isEnabled: trigger.properties?.isEnabled ?? trigger.isEnabled ?? true
                 };
-                if (existingTriggerMap.has(finalUid)) {
-                    dbTrigger.id = existingTriggerMap.get(finalUid);
-                }
+                if (existingTriggerMap.has(finalUid)) dbTrigger.id = existingTriggerMap.get(finalUid);
                 return dbTrigger;
+            });
+
+            const cinematicsToUpsert = (cinematicsDelta || []).map(cin => {
+                // 🔥 FIX: Tomar el string ID del frontend como el UID de la base de datos
+                const finalUid = cin.uid || cin.id || crypto.randomUUID();
+                const dbCin: any = {
+                    sceneId: sceneId,
+                    uid: finalUid,
+                    name: cin.name,
+                    durationMs: cin.durationMs,
+                    tracks: cin.tracks || []
+                };
+                // Si el UID ya existe en BD, agregamos su ID (int auto incremental) para hacer UPDATE en vez de INSERT
+                if (existingCinematicMap.has(finalUid)) dbCin.id = existingCinematicMap.get(finalUid);
+                return dbCin;
             });
 
             if (objectsToUpsert.length > 0) {
@@ -174,11 +210,16 @@ class EpisodeLogicService {
                     transaction 
                 });
             }
-            
             if (triggersToUpsert.length > 0) {
                 await TriggerModel.bulkCreate(triggersToUpsert, { 
                     updateOnDuplicate: ['name', 'parentId', 'position', 'size', 'condition', 'actionType', 'targetObjectName', 'actionProperties', 'isRepeatable', 'isEnabled'], 
                     transaction 
+                });
+            }
+            if (cinematicsToUpsert.length > 0) {
+                await CinematicModel.bulkCreate(cinematicsToUpsert, {
+                    updateOnDuplicate: ['name', 'durationMs', 'tracks'],
+                    transaction
                 });
             }
 
@@ -188,8 +229,7 @@ class EpisodeLogicService {
                 message: "Plataforma/Escena guardada exitosamente", 
                 upsertedObjects: objectsToUpsert.length,
                 upsertedTriggers: triggersToUpsert.length,
-                deletedObjects: deletedObjects.length,
-                deletedTriggers: deletedTriggers.length
+                upsertedCinematics: cinematicsToUpsert.length
             };
 
         } catch (error) {

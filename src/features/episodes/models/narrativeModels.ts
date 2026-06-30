@@ -1,14 +1,15 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-// IMPORT CORREGIDO
 import { ActionType } from '../interfaces/enums';
 
+// 🔥 ACTUALIZADO: Adaptado a las necesidades reales del Director Cinematográfico
 export const CinematicModel = sequelize.define('Cinematic', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     sceneId: { type: DataTypes.INTEGER, allowNull: false },
+    uid: { type: DataTypes.STRING, allowNull: false, unique: true },
     name: { type: DataTypes.STRING, allowNull: false },
-    duration: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
-    timelineData: { type: DataTypes.JSON, allowNull: false, defaultValue: {} }
+    durationMs: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
+    tracks: { type: DataTypes.JSON, allowNull: false, defaultValue: [] }
 }, { tableName: 'cinematics', timestamps: true });
 
 export const SequenceModel = sequelize.define('Sequence', {
@@ -43,4 +44,4 @@ export const LoreTreeModel = sequelize.define('LoreTree', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     episodeId: { type: DataTypes.INTEGER, allowNull: false },
     globalVariablesDefinition: { type: DataTypes.JSON, allowNull: false, defaultValue: {} }
-}, { tableName: 'lore_trees', timestamps: true }); 
+}, { tableName: 'lore_trees', timestamps: true });
