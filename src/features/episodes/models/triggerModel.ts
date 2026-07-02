@@ -42,6 +42,9 @@ export const TriggerModel = sequelize.define<Model<TriggerInterface & { sceneId:
     size: {
         type: DataTypes.JSON,
         allowNull: false,
+    },   rotation: {
+        type: DataTypes.JSON,
+        allowNull: false,
     },
     condition: {
         type: DataTypes.ENUM(...Object.values(TriggerCondition)),

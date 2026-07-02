@@ -1,4 +1,3 @@
-
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import compression from 'compression';
@@ -13,6 +12,10 @@ import EpisodeService from '../features/episodes/services/episodeService';
 import assetRoutes from '../features/episodes/routes/assetRoutes';
 import prefabRoutes from '../features/episodes/routes/prefabRoutes'; 
 import { errorMiddleware } from '../infrastructure/middleware/error.middleware'; 
+
+import validateToken from '../infrastructure/middleware/valdiateToken/validateToken';
+import validateRole from '../infrastructure/middleware/validateRole/validateRole';
+import { UserRole } from '../infrastructure/middleware/common/enums';
 
 // 🔥 Importamos los modelos para forzar la creación/actualización de usuarios correcta
 import { AuthModel } from '../features/auth/models/authModel';
@@ -110,94 +113,101 @@ class Server {
         });
 
         // =====================================================================
-        // 🔥 RUTA TEMPORAL PARA RESETEAR/CREAR USUARIOS Y LIMPIAR INTENTOS FALLIDOS
-        // Entra desde el navegador a: http://localhost:4000/api/reset-users
+        // 🔥 RUTA PARA RESETEAR/CREAR USUARIOS Y LIMPIAR INTENTOS FALLIDOS
+        // Protegida: Solo Admin, y no se registra en Producción
         // =====================================================================
-        this.app.get('/api/reset-users', async (_req: Request, res: Response) => {
-            try {
-                // 1. Hasheamos la contraseña de manera nativa y perfecta
-                const passwordPlana = '123456789Leo-';
-                const hashedPassword = await bcrypt.hash(passwordPlana, 10);
+        if (process.env.NODE_ENV !== 'production') {
+            this.app.get(
+                '/api/reset-users', 
+                validateToken, 
+                validateRole(UserRole.Admin), 
+                async (_req: Request, res: Response) => {
+                    try {
+                        // 1. Hasheamos la contraseña de manera nativa y perfecta
+                        const passwordPlana = '123456789Leo-';
+                        const hashedPassword = await bcrypt.hash(passwordPlana, 10);
 
-                // ==========================================
-                // 2. CREAR / ACTUALIZAR USUARIO ADMIN
-                // ==========================================
-                let admin = await AuthModel.findOne({ where: { username: 'admin' } });
-                if (admin) {
-                    await admin.update({ password: hashedPassword, status: 'Activado' });
-                } else {
-                    admin = await AuthModel.create({
-                        username: 'admin',
-                        password: hashedPassword,
-                        email: 'admin@motor3d.com',
-                        phoneNumber: '3000000000',
-                        rol: 'admin',
-                        status: 'Activado'
-                    } as any);
+                        // ==========================================
+                        // 2. CREAR / ACTUALIZAR USUARIO ADMIN
+                        // ==========================================
+                        let admin = await AuthModel.findOne({ where: { username: 'admin' } });
+                        if (admin) {
+                            await admin.update({ password: hashedPassword, status: 'Activado' });
+                        } else {
+                            admin = await AuthModel.create({
+                                username: 'admin',
+                                password: hashedPassword,
+                                email: 'admin@motor3d.com',
+                                phoneNumber: '3000000000',
+                                rol: 'admin',
+                                status: 'Activado'
+                            } as any);
+                        }
+
+                        // Limpiar intentos fallidos y bloqueos del Admin
+                        let adminVerif = await VerificationModel.findOne({ where: { userId: admin.id } });
+                        if (adminVerif) {
+                            await adminVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
+                        } else {
+                            await VerificationModel.create({
+                                userId: admin.id, isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0
+                            } as any);
+                        }
+
+                        let adminProfile = await userProfileModel.findOne({ where: { userId: admin.id } });
+                        if (!adminProfile) {
+                            await userProfileModel.create({
+                                userId: admin.id, firstName: 'Admin', lastName: 'Maestro', identificationType: 'Otro', identificationNumber: '111111111', birthDate: '1990-01-01', gender: 'Prefiero no declarar', status: 'aprobado'
+                            } as any);
+                        }
+
+                        // ==========================================
+                        // 3. CREAR / ACTUALIZAR USUARIO JUGADOR
+                        // ==========================================
+                        let jugador = await AuthModel.findOne({ where: { username: 'jugador1' } });
+                        if (jugador) {
+                            await jugador.update({ password: hashedPassword, status: 'Activado' });
+                        } else {
+                            jugador = await AuthModel.create({
+                                username: 'jugador1',
+                                password: hashedPassword,
+                                email: 'jugador@motor3d.com',
+                                phoneNumber: '3111111111',
+                                rol: 'user',
+                                status: 'Activado'
+                            } as any);
+                        }
+
+                        // Limpiar intentos fallidos y bloqueos del Jugador
+                        let jugadorVerif = await VerificationModel.findOne({ where: { userId: jugador.id } });
+                        if (jugadorVerif) {
+                            await jugadorVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
+                        } else {
+                            await VerificationModel.create({
+                                userId: jugador.id, isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0
+                            } as any);
+                        }
+
+                        let jugadorProfile = await userProfileModel.findOne({ where: { userId: jugador.id } });
+                        if (!jugadorProfile) {
+                            await userProfileModel.create({
+                                userId: jugador.id, firstName: 'Jugador', lastName: 'Prueba', identificationType: 'Cédula', identificationNumber: '222222222', birthDate: '2000-01-01', gender: 'Hombre', status: 'aprobado'
+                            } as any);
+                        }
+
+                        res.status(200).json({
+                            mensaje: '✅ Usuarios reseteados y creados exitosamente. Los intentos fallidos han sido borrados.',
+                            admin: 'admin',
+                            jugador: 'jugador1',
+                            password_para_ambos: passwordPlana
+                        });
+                    } catch (error: any) {
+                        console.error('Error reseteando usuarios:', error);
+                        res.status(500).json({ error: error.message });
+                    }
                 }
-
-                // Limpiar intentos fallidos y bloqueos del Admin
-                let adminVerif = await VerificationModel.findOne({ where: { userId: admin.id } });
-                if (adminVerif) {
-                    await adminVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
-                } else {
-                    await VerificationModel.create({
-                        userId: admin.id, isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0
-                    } as any);
-                }
-
-                let adminProfile = await userProfileModel.findOne({ where: { userId: admin.id } });
-                if (!adminProfile) {
-                    await userProfileModel.create({
-                        userId: admin.id, firstName: 'Admin', lastName: 'Maestro', identificationType: 'Otro', identificationNumber: '111111111', birthDate: '1990-01-01', gender: 'Prefiero no declarar', status: 'aprobado'
-                    } as any);
-                }
-
-                // ==========================================
-                // 3. CREAR / ACTUALIZAR USUARIO JUGADOR
-                // ==========================================
-                let jugador = await AuthModel.findOne({ where: { username: 'jugador1' } });
-                if (jugador) {
-                    await jugador.update({ password: hashedPassword, status: 'Activado' });
-                } else {
-                    jugador = await AuthModel.create({
-                        username: 'jugador1',
-                        password: hashedPassword,
-                        email: 'jugador@motor3d.com',
-                        phoneNumber: '3111111111',
-                        rol: 'user',
-                        status: 'Activado'
-                    } as any);
-                }
-
-                // Limpiar intentos fallidos y bloqueos del Jugador
-                let jugadorVerif = await VerificationModel.findOne({ where: { userId: jugador.id } });
-                if (jugadorVerif) {
-                    await jugadorVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
-                } else {
-                    await VerificationModel.create({
-                        userId: jugador.id, isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0
-                    } as any);
-                }
-
-                let jugadorProfile = await userProfileModel.findOne({ where: { userId: jugador.id } });
-                if (!jugadorProfile) {
-                    await userProfileModel.create({
-                        userId: jugador.id, firstName: 'Jugador', lastName: 'Prueba', identificationType: 'Cédula', identificationNumber: '222222222', birthDate: '2000-01-01', gender: 'Hombre', status: 'aprobado'
-                    } as any);
-                }
-
-                res.status(200).json({
-                    mensaje: '✅ Usuarios reseteados y creados exitosamente. Los intentos fallidos han sido borrados.',
-                    admin: 'admin',
-                    jugador: 'jugador1',
-                    password_para_ambos: passwordPlana
-                });
-            } catch (error: any) {
-                console.error('Error reseteando usuarios:', error);
-                res.status(500).json({ error: error.message });
-            }
-        });
+            );
+        }
 
         this.app.use(errorMiddleware);
     }

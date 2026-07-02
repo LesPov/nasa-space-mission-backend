@@ -5,7 +5,7 @@ import { SceneModel } from '../models/sceneModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
 import { SceneConnectionModel } from '../models/sceneConnectionModel';
-import { CinematicModel } from '../models/narrativeModels'; // 🔥 AÑADIDO
+import { CinematicModel } from '../models/narrativeModels';
 import sequelize from '../../../infrastructure/database/config';
 import crypto from 'crypto';
 
@@ -84,14 +84,14 @@ class EpisodeLogicService {
         const sceneObjects = await SceneObjectModel.findAll({ where: { sceneId } });
         const triggers = await TriggerModel.findAll({ where: { sceneId } });
         const connections = await SceneConnectionModel.findAll({ where: { sourceSceneId: sceneId } });
-        const cinematics = await CinematicModel.findAll({ where: { sceneId } }); // 🔥 AÑADIDO
+        const cinematics = await CinematicModel.findAll({ where: { sceneId } });
 
         return {
             scene: scene.toJSON(),
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
             connections: connections.map(c => c.toJSON()),
-            cinematics: cinematics.map(c => c.toJSON()) // 🔥 AÑADIDO
+            cinematics: cinematics.map(c => c.toJSON())
         };
     }
 
@@ -99,10 +99,10 @@ class EpisodeLogicService {
        sceneId: number, 
        sceneObjectsDelta: any[], 
        triggersDelta: any[], 
-       cinematicsDelta: any[], // 🔥 AÑADIDO
+       cinematicsDelta: any[], 
        deletedObjects: string[], 
        deletedTriggers: string[], 
-       deletedCinematics: string[], // 🔥 AÑADIDO
+       deletedCinematics: string[], 
        environmentSettings: any, 
        spawnPoint: any
     ) {
@@ -128,8 +128,6 @@ class EpisodeLogicService {
 
             const incomingObjUids = sceneObjectsDelta.map(o => o.uid).filter(Boolean);
             const incomingTriggerUids = triggersDelta.map(t => t.uid).filter(Boolean);
-            
-            // 🔥 FIX: Aceptamos que el ID del Frontend pueda venir en 'id' o 'uid'
             const incomingCinUids = cinematicsDelta.map(c => c.uid || c.id).filter(Boolean);
 
             let existingObjMap = new Map();
@@ -178,6 +176,10 @@ class EpisodeLogicService {
                     parentId: trigger.parentId || null,
                     position: trigger.position,
                     size: trigger.scale || trigger.size,
+                    
+                    // 🔥 FIX: EXTRAEMOS EXPLICÍTAMENTE LA ROTACIÓN DEL OBJETO Y/O PROPIEDADES (Failsafe)
+                    rotation: trigger.rotation || trigger.properties?.rotation || { x: 0, y: 0, z: 0 },
+                    
                     condition: trigger.properties?.condition || trigger.condition || 'on_enter',
                     actionType: trigger.properties?.actionType || trigger.actionType || 'show_message',
                     targetObjectName: trigger.properties?.targetObjectName || trigger.targetObjectName || '',
@@ -190,7 +192,6 @@ class EpisodeLogicService {
             });
 
             const cinematicsToUpsert = (cinematicsDelta || []).map(cin => {
-                // 🔥 FIX: Tomar el string ID del frontend como el UID de la base de datos
                 const finalUid = cin.uid || cin.id || crypto.randomUUID();
                 const dbCin: any = {
                     sceneId: sceneId,
@@ -199,7 +200,6 @@ class EpisodeLogicService {
                     durationMs: cin.durationMs,
                     tracks: cin.tracks || []
                 };
-                // Si el UID ya existe en BD, agregamos su ID (int auto incremental) para hacer UPDATE en vez de INSERT
                 if (existingCinematicMap.has(finalUid)) dbCin.id = existingCinematicMap.get(finalUid);
                 return dbCin;
             });
@@ -212,7 +212,8 @@ class EpisodeLogicService {
             }
             if (triggersToUpsert.length > 0) {
                 await TriggerModel.bulkCreate(triggersToUpsert, { 
-                    updateOnDuplicate: ['name', 'parentId', 'position', 'size', 'condition', 'actionType', 'targetObjectName', 'actionProperties', 'isRepeatable', 'isEnabled'], 
+                    // 🔥 FIX: AÑADIDA LA 'rotation' A LA LISTA DE ACTUALIZACIÓN EN CASO DE DUPLICADO
+                    updateOnDuplicate: ['name', 'parentId', 'position', 'size', 'rotation', 'condition', 'actionType', 'targetObjectName', 'actionProperties', 'isRepeatable', 'isEnabled'], 
                     transaction 
                 });
             }

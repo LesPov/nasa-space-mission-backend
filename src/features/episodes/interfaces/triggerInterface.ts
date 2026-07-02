@@ -23,6 +23,8 @@ export interface TriggerInterface {
     parentId?: string | null; // AHORA GUARDARÁ EL 'uid' DEL PADRE
     position: { x: number; y: number; z: number };
     size: { x: number; y: number; z: number };
+        rotation: { x: number; y: number; z: number };
+
     condition: TriggerCondition;
     actionType: TriggerAction;
     targetObjectName: string;
