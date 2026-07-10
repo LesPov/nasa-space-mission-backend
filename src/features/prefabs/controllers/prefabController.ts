@@ -1,7 +1,7 @@
-
 import { NextFunction, Request, Response } from 'express';
 import { PrefabModel } from '../models/prefabModel';
-import { AssetModel } from 'features/assets/models/assetModel';
+// 🔥 FIX: Import relativo correcto
+import { AssetModel } from '../../assets/models/assetModel';
  
 class PrefabController {
     

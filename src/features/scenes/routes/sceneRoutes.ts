@@ -3,7 +3,8 @@ import SceneController from '../controllers/sceneController';
 import { UserRole } from '../../../infrastructure/middleware/common/enums';
 import validateToken from '../../../infrastructure/middleware/valdiateToken/validateToken';
 import validateRole from '../../../infrastructure/middleware/validateRole/validateRole';
-import sceneObjectRoutes from 'features/episodes/routes/sceneObjectRoutes';
+// 🔥 FIX: Import relativo correcto
+import sceneObjectRoutes from '../../episodes/routes/sceneObjectRoutes';
  
 // Habilitar mergeParams para recuperar el episodeId desde el enrutador padre
 const sceneRoutes = Router({ mergeParams: true });
