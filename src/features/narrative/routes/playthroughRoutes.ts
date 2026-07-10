@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import PlaythroughController from '../controllers/playthroughController';
 
-// Rutas para el Motor de Estado del Backend (Client envía eventos, Backend decide)
-const playthroughRoutes = Router();
+// Merge params para soportar rutas montadas anidadas si se requiere a futuro
+const playthroughRoutes = Router({ mergeParams: true });
 
 playthroughRoutes.post('/start', PlaythroughController.startPlaythrough);
 playthroughRoutes.get('/:playthroughId', PlaythroughController.getState);

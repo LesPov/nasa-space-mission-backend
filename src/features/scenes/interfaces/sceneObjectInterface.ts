@@ -1,5 +1,5 @@
 import { Optional } from 'sequelize';
-import { AssetInterface } from './assetInterface';
+import { AssetInterface } from '../../assets/interfaces/assetInterface';
 
 export type SceneObjectType =
     | 'model' | 'cube' | 'sphere' | 'plane' | 'camera' | 'cylinder'

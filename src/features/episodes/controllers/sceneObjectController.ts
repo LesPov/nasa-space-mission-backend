@@ -1,6 +1,6 @@
 
 import { NextFunction, Request, Response } from 'express';
-import { SceneObjectModel } from '../models/sceneObjectModel';
+import { SceneObjectModel } from '../../scenes/models/sceneObjectModel';
 
 class SceneObjectController {
     public async getObjectById(req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -1,6 +1,6 @@
 
 import { Optional } from 'sequelize';
-import { AssetInterface } from './assetInterface';
+import { AssetInterface } from '../../assets/interfaces/assetInterface';
 
 export interface PrefabInterface {
     id: number;

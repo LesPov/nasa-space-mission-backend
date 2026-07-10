@@ -1,8 +1,8 @@
-import { PlaythroughModel } from '../models/playthroughModel';
-import { PlayerSceneStateModel } from '../models/playerSceneStateModel';
-import { SceneModel } from '../models/sceneModel';
-import { SceneConnectionModel } from '../models/sceneConnectionModel';
-import { EpisodeVersionModel } from '../models/episodeVersionModel';
+import { PlaythroughModel } from '../model/playthroughModel';
+import { PlayerSceneStateModel } from '../model/playerSceneStateModel';
+import { SceneModel } from '../../scenes/models/sceneModel';
+import { SceneConnectionModel } from '../../scenes/models/sceneConnectionModel';
+import { EpisodeVersionModel } from '../../episodes/models/episodeVersionModel';
  import { AppError } from '../../../infrastructure/errors/app.error';
 import sequelize from '../../../infrastructure/database/config';
 import { SceneProgressStatus } from '../interfaces/enums';

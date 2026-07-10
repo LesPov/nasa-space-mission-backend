@@ -1,8 +1,8 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-import { EpisodeVersionInterface } from '../interfaces/narrativeInterfaces';
+import { EpisodeVersionInterface } from '../../narrative/interfaces/narrativeInterfaces';
 // IMPORT CORREGIDO: Apunta localmente, evitando el error MODULE_NOT_FOUND
-import { EpisodeVersionStatus } from '../interfaces/enums';
+import { EpisodeVersionStatus } from '../../narrative/interfaces/enums';
 
 type EpisodeVersionCreationAttributes = Optional<EpisodeVersionInterface, 'id'>;
 

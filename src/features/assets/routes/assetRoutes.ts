@@ -8,18 +8,14 @@ import validateRole from '../../../infrastructure/middleware/validateRole/valida
 const assetRoutes = Router();
 const adminOnly = [validateToken, validateRole(UserRole.Admin)];
 
-// --- RUTA PARA SUBIR UN NUEVO ASSET LOCAL ---
-// 🔥 FIX ERROR 500: Envolvemos a Multer en un callback para capturar sus errores 
-// y convertirlos en JSON (Error 400) en lugar de tumbar el servidor (Error 500).
 assetRoutes.post(
     '/upload',
     adminOnly,
     (req: Request, res: Response, next: NextFunction) => {
         uploadAsset.single('assetFile')(req, res, (err: any) => {
             if (err) {
-                console.error("[Multer Error] Fallo al procesar archivo:", err.message);
                 return res.status(400).json({ 
-                    message: 'Error procesando el archivo. Puede que exceda el límite de 100MB o tenga mal formato.', 
+                    message: 'Error procesando el archivo. Límite o formato.', 
                     error: err.message 
                 });
             }
@@ -29,7 +25,6 @@ assetRoutes.post(
     AssetController.uploadAsset
 );
 
-// --- RUTA PARA OBTENER TODOS LOS ASSETS ---
 assetRoutes.get('/', adminOnly, AssetController.getAllAssets);
 
 export default assetRoutes;

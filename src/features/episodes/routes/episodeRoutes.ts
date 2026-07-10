@@ -1,32 +1,33 @@
-
 import { Router } from 'express';
 import EpisodeController from '../controllers/episodeController';
 import { UserRole } from '../../../infrastructure/middleware/common/enums';
 import validateToken from '../../../infrastructure/middleware/valdiateToken/validateToken';
 import validateRole from '../../../infrastructure/middleware/validateRole/validateRole';
-import sceneObjectRoutes from './sceneObjectRoutes';
-import playthroughRoutes from './playthroughRoutes';
-import playerStateRoutes from './playerStateRoutes'; // 🔥 FIX: Importación agregada
+
+// Importamos rutas de los otros sub-dominios extraídos
+import { sceneRoutes, standaloneSceneRoutes } from '../../scenes/routes/sceneRoutes';
+import playthroughRoutes from '../../narrative/routes/playthroughRoutes';
+import playerStateRoutes from '../../player-progress/routes/playerStateRoutes';
   
 const episodeRoutes = Router();
 const adminOnly = [validateToken, validateRole(UserRole.Admin)]; 
 const loggedInUsers = [validateToken]; 
 
+// Core Episodes
 episodeRoutes.get('/', loggedInUsers, EpisodeController.getAllEpisodes);
 episodeRoutes.post('/', adminOnly, EpisodeController.createEpisode);
 
-// Gestión de Escenas / Plataformas
-episodeRoutes.get('/:episodeId/scenes', loggedInUsers, EpisodeController.getScenesByEpisode);
-episodeRoutes.post('/:episodeId/scenes', adminOnly, EpisodeController.createScene);
+// 🛡️ PATRÓN STRANGLER FIG: Actuamos como Proxy para no romper la API Front-End
+// Redirige /api/episodes/:episodeId/scenes -> Features/Scenes
+episodeRoutes.use('/:episodeId/scenes', sceneRoutes);
 
-episodeRoutes.get('/scenes/:sceneId', loggedInUsers, EpisodeController.getSceneFull);
-episodeRoutes.post('/scenes/:sceneId/save-map', adminOnly, EpisodeController.saveSceneMap);
+// Redirige /api/episodes/scenes -> Features/Scenes (Standalone)
+episodeRoutes.use('/scenes', standaloneSceneRoutes);
 
-// Montaje de rutas hijas
+// Redirige /api/episodes/playthroughs -> Features/Narrative
 episodeRoutes.use('/playthroughs', validateToken, playthroughRoutes);
-episodeRoutes.use('/scenes/:sceneId/objects', sceneObjectRoutes);
 
-// 🔥 FIX: Montaje de la ruta de guardado/carga del jugador que estaba huérfana
+// Redirige /api/episodes/:episodeId/save-slots -> Features/Player-Progress
 episodeRoutes.use('/:episodeId/save-slots', validateToken, playerStateRoutes);
 
 export default episodeRoutes;

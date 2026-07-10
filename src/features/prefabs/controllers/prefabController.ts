@@ -1,8 +1,8 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { PrefabModel } from '../models/prefabModel';
-import { AssetModel } from '../models/assetModel';
-
+import { AssetModel } from 'features/assets/models/assetModel';
+ 
 class PrefabController {
     
     public async getAllPrefabs(req: Request, res: Response, next: NextFunction): Promise<void> {

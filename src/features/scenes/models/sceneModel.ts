@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-import { SceneInterface } from '../interfaces/narrativeInterfaces';
+import { SceneInterface } from '../../narrative/interfaces/narrativeInterfaces';
 
 type SceneCreationAttributes = Optional<SceneInterface, 'id'>;
 

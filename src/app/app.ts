@@ -9,8 +9,8 @@ import { initializeChatbot } from '../infrastructure/chatbot/chatbot.client';
 import { defineDatabaseAssociations, syncDatabase } from '../infrastructure/database/connection';
 import AuthService from '../features/auth/services/auth.service';
 import EpisodeService from '../features/episodes/services/episodeService';
-import assetRoutes from '../features/episodes/routes/assetRoutes';
-import prefabRoutes from '../features/episodes/routes/prefabRoutes'; 
+import assetRoutes from '../features/assets/routes/assetRoutes';
+import prefabRoutes from '../features/prefabs/routes/prefabRoutes'; 
 import { errorMiddleware } from '../infrastructure/middleware/error.middleware'; 
 
 import validateToken from '../infrastructure/middleware/valdiateToken/validateToken';

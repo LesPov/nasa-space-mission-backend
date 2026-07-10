@@ -5,15 +5,15 @@ import { VerificationModel } from "../../features/auth/models/verificationModel"
 import { AssetModel } from "../../features/episodes/models/assetModel";
 import { EpisodeModel } from "../../features/episodes/models/episodeModel";
 import { EpisodeVersionModel } from "../../features/episodes/models/episodeVersionModel";
-import { SceneModel } from "../../features/episodes/models/sceneModel";
-import { SceneConnectionModel } from "../../features/episodes/models/sceneConnectionModel";
-import { SceneObjectModel } from "../../features/episodes/models/sceneObjectModel";
-import { TriggerModel } from "../../features/episodes/models/triggerModel";
-import { PlaythroughModel } from "../../features/episodes/models/playthroughModel";
-import { PlayerSceneStateModel } from "../../features/episodes/models/playerSceneStateModel";
-import { CinematicModel, SequenceModel, ActionModel, DecisionTreeModel, ConsequenceTreeModel, LoreTreeModel } from "../../features/episodes/models/narrativeModels";
+import { SceneModel } from "../../features/scenes/models/sceneModel";
+import { SceneConnectionModel } from "../../features/scenes/models/sceneConnectionModel";
+import { SceneObjectModel } from "../../features/scenes/models/sceneObjectModel";
+import { TriggerModel } from "../../features/scenes/models/triggerModel";
+import { PlaythroughModel } from "../../features/narrative/model/playthroughModel";
+import { PlayerSceneStateModel } from "../../features/narrative/model/playerSceneStateModel";
+import { CinematicModel, SequenceModel, ActionModel, DecisionTreeModel, ConsequenceTreeModel, LoreTreeModel } from "../../features/narrative/model/narrativeModels";
 import { userProfileModel } from "../../features/profiles/models/userProfileModel";
-import { PrefabModel } from "../../features/episodes/models/prefabModel"; 
+import { PrefabModel } from "../../features/prefabs/models/prefabModel"; 
 
 export const defineDatabaseAssociations = () => {
     // Auth & Profiles

@@ -1,5 +1,5 @@
-import { SceneObjectInterface } from "./sceneObjectInterface";
-import { TriggerInterface } from "./triggerInterface";
+import { SceneObjectInterface } from "../../scenes/interfaces/sceneObjectInterface";
+import { TriggerInterface } from "../../scenes/interfaces/triggerInterface";
 
 // Definimos los tipos de análisis posibles. Esto es extensible para el futuro.
 export type AnalysisType = 

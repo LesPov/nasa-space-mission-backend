@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-import { AssetInterface } from '../interfaces/assetInterface';
+import { AssetInterface } from '../../assets/interfaces/assetInterface';
 
 // Solo omitimos el ID al momento de crear, ya que se autogenera
 type AssetCreationAttributes = Optional<AssetInterface, 'id'>;

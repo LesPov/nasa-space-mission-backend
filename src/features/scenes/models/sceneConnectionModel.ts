@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
-import { SceneConnectionInterface } from '../interfaces/narrativeInterfaces';
+import { SceneConnectionInterface } from '../../narrative/interfaces/narrativeInterfaces';
 
 type SceneConnectionCreationAttributes = Optional<SceneConnectionInterface, 'id' | 'requiredConditionId' | 'targetSpawnPoint'>;
 
