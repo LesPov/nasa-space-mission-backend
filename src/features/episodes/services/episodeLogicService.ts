@@ -241,4 +241,4 @@ class EpisodeLogicService {
     }
 }
 
-export default new EpisodeLogicService();
+export default new EpisodeLogicService(); 
