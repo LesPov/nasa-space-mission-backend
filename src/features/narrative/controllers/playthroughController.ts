@@ -1,8 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import PlaythroughLogicService from '../services/playthroughLogicService';
+// 🔥 NUEVO: Importación de los contratos de narrativa
+import { ProcessEventDto } from '../../../shared/contracts';
 
 class PlaythroughController {
-    public async startPlaythrough(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async startPlaythrough(req: Request<any, any, { episodeVersionId: number }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const userId = req.user!.id;
             const { episodeVersionId } = req.body;
@@ -18,7 +20,7 @@ class PlaythroughController {
         }
     }
 
-    public async processEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async processEvent(req: Request<{ playthroughId: string }, any, ProcessEventDto>, res: Response, next: NextFunction): Promise<void> {
         try {
             const userId = req.user!.id;
             const playthroughId = Number(req.params.playthroughId);
@@ -35,7 +37,7 @@ class PlaythroughController {
         }
     }
 
-    public async getState(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async getState(req: Request<{ playthroughId: string }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const userId = req.user!.id;
             const playthroughId = Number(req.params.playthroughId);

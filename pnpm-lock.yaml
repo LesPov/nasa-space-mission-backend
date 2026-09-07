@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@types/express': 5.0.6
-  '@types/express-serve-static-core': 5.1.1
-  '@types/node': 25.5.0
-
 importers:
 
   .:
@@ -27,13 +22,13 @@ importers:
         version: 1.2.1
       axios:
         specifier: ^1.15.0
-        version: 1.17.0
+        version: 1.17.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
       compression:
         specifier: ^1.8.1
-        version: 1.8.1
+        version: 1.8.1(supports-color@5.5.0)
       cors:
         specifier: ^2.8.6
         version: 2.8.6
@@ -42,10 +37,10 @@ importers:
         version: 17.4.2
       express:
         specifier: ^5.2.1
-        version: 5.2.1
+        version: 5.2.1(supports-color@5.5.0)
       express-rate-limit:
         specifier: ^8.3.2
-        version: 8.5.2(express@5.2.1)
+        version: 8.5.2(express@5.2.1(supports-color@5.5.0))
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -54,7 +49,7 @@ importers:
         version: 2.1.1
       mysql2:
         specifier: ^3.22.5
-        version: 3.22.5(@types/node@25.5.0)
+        version: 3.22.5(@types/node@25.9.5)
       node-fetch:
         specifier: 3.3.2
         version: 3.3.2
@@ -69,19 +64,19 @@ importers:
         version: 2.3.4
       puppeteer:
         specifier: ^24.40.0
-        version: 24.43.1(typescript@6.0.3)
+        version: 24.43.1(supports-color@5.5.0)(typescript@6.0.3)
       qrcode-terminal:
         specifier: ^0.12.0
         version: 0.12.0
       sequelize:
         specifier: ^6.37.8
-        version: 6.37.8(mysql2@3.22.5(@types/node@25.5.0))(pg-hstore@2.3.4)(pg@8.21.0)
+        version: 6.37.8(mysql2@3.22.5(@types/node@25.9.5))(pg-hstore@2.3.4)(pg@8.21.0)(supports-color@5.5.0)
       wa-sticker-formatter:
         specifier: ^4.4.4
-        version: 4.4.4
+        version: 4.4.4(debug@4.4.3(supports-color@5.5.0))
       whatsapp-web.js:
         specifier: ^1.34.6
-        version: 1.34.7(typescript@6.0.3)
+        version: 1.34.7(supports-color@5.5.0)(typescript@6.0.3)
     devDependencies:
       '@types/compression':
         specifier: ^1.8.1
@@ -90,7 +85,7 @@ importers:
         specifier: ^2.8.19
         version: 2.8.19
       '@types/express':
-        specifier: 5.0.6
+        specifier: ^5.0.6
         version: 5.0.6
       '@types/jsonwebtoken':
         specifier: ^9.0.10
@@ -99,8 +94,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       '@types/node':
-        specifier: 25.5.0
-        version: 25.5.0
+        specifier: ^25.6.0
+        version: 25.9.5
       '@types/nodemailer':
         specifier: ^8.0.0
         version: 8.0.0
@@ -121,10 +116,10 @@ importers:
         version: 3.1.14
       supertest:
         specifier: ^7.2.2
-        version: 7.2.2
+        version: 7.2.2(supports-color@5.5.0)
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@25.5.0)(typescript@6.0.3)
+        version: 10.9.2(@types/node@25.9.5)(typescript@6.0.3)
 
 packages:
 
@@ -405,6 +400,9 @@ packages:
 
   '@types/node@25.5.0':
     resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
+
+  '@types/node@25.9.5':
+    resolution: {integrity: sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg==}
 
   '@types/nodemailer@8.0.0':
     resolution: {integrity: sha512-fyf8jWULsCo0d0BuoQ75i6IeoHs47qcqxWc7yUdUcV0pOZGjUTTOvwdG1PRXUDqN/8A64yQdQdnA2pZgcdi+cA==}
@@ -1425,7 +1423,7 @@ packages:
     resolution: {integrity: sha512-95uZ2TrPWAZdwpB3vvvDbmEMcNG8yIeNCyu6GUcr/QnWEE/wXm7+mhOCsdQfWQDTV7qYT/PDUZ4U4UPP4AsXqQ==}
     engines: {node: '>= 8.0'}
     peerDependencies:
-      '@types/node': 25.5.0
+      '@types/node': '>= 8'
 
   named-placeholders@1.1.6:
     resolution: {integrity: sha512-Tz09sEL2EEuv5fFowm419c1+a/jSMiBjI9gHxVLrVdbUkkNUUfjsVYs9pVZu5oCon/kmRh9TfLEObFtkVxmY0w==}
@@ -2005,7 +2003,7 @@ packages:
     peerDependencies:
       '@swc/core': '>=1.2.50'
       '@swc/wasm': '>=1.2.50'
-      '@types/node': 25.5.0
+      '@types/node': '*'
       typescript: '>=2.7'
     peerDependenciesMeta:
       '@swc/core':
@@ -2046,6 +2044,9 @@ packages:
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+  undici-types@7.24.6:
+    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
   universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
@@ -2489,12 +2490,12 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@puppeteer/browsers@2.13.0':
+  '@puppeteer/browsers@2.13.0(supports-color@5.5.0)':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(supports-color@5.5.0)
       progress: 2.0.3
-      proxy-agent: 6.5.0
+      proxy-agent: 6.5.0(supports-color@5.5.0)
       semver: 7.8.2
       tar-fs: 3.1.2
       yargs: 17.7.2
@@ -2504,12 +2505,12 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@puppeteer/browsers@2.13.2':
+  '@puppeteer/browsers@2.13.2(supports-color@5.5.0)':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(supports-color@5.5.0)
       progress: 2.0.3
-      proxy-agent: 6.5.0
+      proxy-agent: 6.5.0(supports-color@5.5.0)
       semver: 7.8.2
       tar-fs: 3.1.2
       yargs: 17.7.2
@@ -2594,7 +2595,7 @@ snapshots:
   '@types/compression@1.8.1':
     dependencies:
       '@types/express': 5.0.6
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
 
   '@types/connect@3.4.38':
     dependencies:
@@ -2604,7 +2605,7 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
 
   '@types/debug@4.1.13':
     dependencies:
@@ -2628,7 +2629,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
 
   '@types/methods@1.1.4': {}
 
@@ -2642,9 +2643,13 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/node@25.9.5':
+    dependencies:
+      undici-types: 7.24.6
+
   '@types/nodemailer@8.0.0':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
 
   '@types/qrcode-terminal@0.12.2': {}
 
@@ -2665,7 +2670,7 @@ snapshots:
     dependencies:
       '@types/cookiejar': 2.1.5
       '@types/methods': 1.1.4
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
       form-data: 4.0.5
 
   '@types/supertest@7.2.0':
@@ -2677,7 +2682,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
     optional: true
 
   abort-controller@3.0.0:
@@ -2695,7 +2700,7 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  agent-base@6.0.2:
+  agent-base@6.0.2(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
     transitivePeerDependencies:
@@ -2767,17 +2772,17 @@ snapshots:
 
   aws-ssl-profiles@1.1.2: {}
 
-  axios@0.21.4:
+  axios@0.21.4(debug@4.4.3(supports-color@5.5.0)):
     dependencies:
-      follow-redirects: 1.16.0
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@5.5.0))
     transitivePeerDependencies:
       - debug
 
-  axios@1.17.0:
+  axios@1.17.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0):
     dependencies:
-      follow-redirects: 1.16.0
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@5.5.0))
       form-data: 4.0.5
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.1(supports-color@5.5.0)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -2838,7 +2843,7 @@ snapshots:
   bluebird@3.7.2:
     optional: true
 
-  body-parser@2.2.2:
+  body-parser@2.2.2(supports-color@5.5.0):
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
@@ -2983,11 +2988,11 @@ snapshots:
     dependencies:
       mime-db: 1.54.0
 
-  compression@1.8.1:
+  compression@1.8.1(supports-color@5.5.0):
     dependencies:
       bytes: 3.1.2
       compressible: 2.0.18
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@5.5.0)
       negotiator: 0.6.4
       on-headers: 1.1.0
       safe-buffer: 5.2.1
@@ -3068,9 +3073,11 @@ snapshots:
 
   data-uri-to-buffer@6.0.2: {}
 
-  debug@2.6.9:
+  debug@2.6.9(supports-color@5.5.0):
     dependencies:
       ms: 2.0.0
+    optionalDependencies:
+      supports-color: 5.5.0
 
   debug@4.4.3(supports-color@5.5.0):
     dependencies:
@@ -3197,15 +3204,15 @@ snapshots:
 
   expand-template@2.0.3: {}
 
-  express-rate-limit@8.5.2(express@5.2.1):
+  express-rate-limit@8.5.2(express@5.2.1(supports-color@5.5.0)):
     dependencies:
-      express: 5.2.1
+      express: 5.2.1(supports-color@5.5.0)
       ip-address: 10.2.0
 
-  express@5.2.1:
+  express@5.2.1(supports-color@5.5.0):
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.2.2
+      body-parser: 2.2.2(supports-color@5.5.0)
       content-disposition: 1.1.0
       content-type: 1.0.5
       cookie: 0.7.2
@@ -3215,7 +3222,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.1
+      finalhandler: 2.1.1(supports-color@5.5.0)
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
@@ -3226,16 +3233,16 @@ snapshots:
       proxy-addr: 2.0.7
       qs: 6.15.2
       range-parser: 1.2.1
-      router: 2.2.0
-      send: 1.2.1
-      serve-static: 2.2.1
+      router: 2.2.0(supports-color@5.5.0)
+      send: 1.2.1(supports-color@5.5.0)
+      serve-static: 2.2.1(supports-color@5.5.0)
       statuses: 2.0.2
       type-is: 2.1.0
       vary: 1.1.2
     transitivePeerDependencies:
       - supports-color
 
-  extract-zip@2.0.1:
+  extract-zip@2.0.1(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       get-stream: 5.2.0
@@ -3292,7 +3299,7 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@2.1.1:
+  finalhandler@2.1.1(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -3308,7 +3315,9 @@ snapshots:
       async: 0.2.10
       which: 1.3.1
 
-  follow-redirects@1.16.0: {}
+  follow-redirects@1.16.0(debug@4.4.3(supports-color@5.5.0)):
+    optionalDependencies:
+      debug: 4.4.3(supports-color@5.5.0)
 
   foreground-child@3.3.1:
     dependencies:
@@ -3388,7 +3397,7 @@ snapshots:
     dependencies:
       pump: 3.0.4
 
-  get-uri@6.0.5:
+  get-uri@6.0.5(supports-color@5.5.0):
     dependencies:
       basic-ftp: 5.3.1
       data-uri-to-buffer: 6.0.2
@@ -3445,21 +3454,21 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-agent@7.0.2:
+  http-proxy-agent@7.0.2(supports-color@5.5.0):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@5.0.1:
+  https-proxy-agent@5.0.1(supports-color@5.5.0):
     dependencies:
-      agent-base: 6.0.2
+      agent-base: 6.0.2(supports-color@5.5.0)
       debug: 4.4.3(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6:
+  https-proxy-agent@7.0.6(supports-color@5.5.0):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@5.5.0)
@@ -3690,9 +3699,9 @@ snapshots:
       concat-stream: 2.0.0
       type-is: 1.6.18
 
-  mysql2@3.22.5(@types/node@25.5.0):
+  mysql2@3.22.5(@types/node@25.9.5):
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
       aws-ssl-profiles: 1.1.2
       denque: 2.1.0
       generate-function: 2.3.1
@@ -3773,16 +3782,16 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  pac-proxy-agent@7.2.0:
+  pac-proxy-agent@7.2.0(supports-color@5.5.0):
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@5.5.0)
-      get-uri: 6.0.5
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      get-uri: 6.0.5(supports-color@5.5.0)
+      http-proxy-agent: 7.0.2(supports-color@5.5.0)
+      https-proxy-agent: 7.0.6(supports-color@5.5.0)
       pac-resolver: 7.0.1
-      socks-proxy-agent: 8.0.5
+      socks-proxy-agent: 8.0.5(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -3908,16 +3917,16 @@ snapshots:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
 
-  proxy-agent@6.5.0:
+  proxy-agent@6.5.0(supports-color@5.5.0):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@5.5.0)
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      http-proxy-agent: 7.0.2(supports-color@5.5.0)
+      https-proxy-agent: 7.0.6(supports-color@5.5.0)
       lru-cache: 7.18.3
-      pac-proxy-agent: 7.2.0
+      pac-proxy-agent: 7.2.0(supports-color@5.5.0)
       proxy-from-env: 1.1.0
-      socks-proxy-agent: 8.0.5
+      socks-proxy-agent: 8.0.5(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -3932,9 +3941,9 @@ snapshots:
       end-of-stream: 1.4.5
       once: 1.4.0
 
-  puppeteer-core@24.38.0:
+  puppeteer-core@24.38.0(supports-color@5.5.0):
     dependencies:
-      '@puppeteer/browsers': 2.13.0
+      '@puppeteer/browsers': 2.13.0(supports-color@5.5.0)
       chromium-bidi: 14.0.0(devtools-protocol@0.0.1581282)
       debug: 4.4.3(supports-color@5.5.0)
       devtools-protocol: 0.0.1581282
@@ -3949,9 +3958,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer-core@24.43.1:
+  puppeteer-core@24.43.1(supports-color@5.5.0):
     dependencies:
-      '@puppeteer/browsers': 2.13.2
+      '@puppeteer/browsers': 2.13.2(supports-color@5.5.0)
       chromium-bidi: 14.0.0(devtools-protocol@0.0.1608973)
       debug: 4.4.3(supports-color@5.5.0)
       devtools-protocol: 0.0.1608973
@@ -3966,13 +3975,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.38.0(typescript@6.0.3):
+  puppeteer@24.38.0(supports-color@5.5.0)(typescript@6.0.3):
     dependencies:
-      '@puppeteer/browsers': 2.13.0
+      '@puppeteer/browsers': 2.13.0(supports-color@5.5.0)
       chromium-bidi: 14.0.0(devtools-protocol@0.0.1581282)
       cosmiconfig: 9.0.1(typescript@6.0.3)
       devtools-protocol: 0.0.1581282
-      puppeteer-core: 24.38.0
+      puppeteer-core: 24.38.0(supports-color@5.5.0)
       typed-query-selector: 2.12.2
     transitivePeerDependencies:
       - bare-abort-controller
@@ -3983,13 +3992,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  puppeteer@24.43.1(typescript@6.0.3):
+  puppeteer@24.43.1(supports-color@5.5.0)(typescript@6.0.3):
     dependencies:
-      '@puppeteer/browsers': 2.13.2
+      '@puppeteer/browsers': 2.13.2(supports-color@5.5.0)
       chromium-bidi: 14.0.0(devtools-protocol@0.0.1608973)
       cosmiconfig: 9.0.1(typescript@6.0.3)
       devtools-protocol: 0.0.1608973
-      puppeteer-core: 24.43.1
+      puppeteer-core: 24.43.1(supports-color@5.5.0)
       typed-query-selector: 2.12.2
     transitivePeerDependencies:
       - bare-abort-controller
@@ -4082,7 +4091,7 @@ snapshots:
 
   reusify@1.1.0: {}
 
-  router@2.2.0:
+  router@2.2.0(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       depd: 2.0.0
@@ -4104,7 +4113,7 @@ snapshots:
 
   semver@7.8.2: {}
 
-  send@1.2.1:
+  send@1.2.1(supports-color@5.5.0):
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       encodeurl: 2.0.0
@@ -4122,7 +4131,7 @@ snapshots:
 
   sequelize-pool@7.1.0: {}
 
-  sequelize@6.37.8(mysql2@3.22.5(@types/node@25.5.0))(pg-hstore@2.3.4)(pg@8.21.0):
+  sequelize@6.37.8(mysql2@3.22.5(@types/node@25.9.5))(pg-hstore@2.3.4)(pg@8.21.0)(supports-color@5.5.0):
     dependencies:
       '@types/debug': 4.1.13
       '@types/validator': 13.15.10
@@ -4141,18 +4150,18 @@ snapshots:
       validator: 13.15.35
       wkx: 0.5.0
     optionalDependencies:
-      mysql2: 3.22.5(@types/node@25.5.0)
+      mysql2: 3.22.5(@types/node@25.9.5)
       pg: 8.21.0
       pg-hstore: 2.3.4
     transitivePeerDependencies:
       - supports-color
 
-  serve-static@2.2.1:
+  serve-static@2.2.1(supports-color@5.5.0):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 1.2.1
+      send: 1.2.1(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4224,7 +4233,7 @@ snapshots:
 
   smart-buffer@4.2.0: {}
 
-  socks-proxy-agent@8.0.5:
+  socks-proxy-agent@8.0.5(supports-color@5.5.0):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@5.5.0)
@@ -4298,7 +4307,7 @@ snapshots:
       '@tokenizer/token': 0.3.0
       peek-readable: 4.1.0
 
-  superagent@10.3.0:
+  superagent@10.3.0(supports-color@5.5.0):
     dependencies:
       component-emitter: 1.3.1
       cookiejar: 2.1.4
@@ -4312,11 +4321,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  supertest@7.2.2:
+  supertest@7.2.2(supports-color@5.5.0):
     dependencies:
       cookie-signature: 1.2.2
       methods: 1.1.2
-      superagent: 10.3.0
+      superagent: 10.3.0(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4402,14 +4411,14 @@ snapshots:
       '@ts-morph/common': 0.22.0
       code-block-writer: 12.0.0
 
-  ts-node@10.9.2(@types/node@25.5.0)(typescript@6.0.3):
+  ts-node@10.9.2(@types/node@25.9.5)(typescript@6.0.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
       acorn: 8.16.0
       acorn-walk: 8.3.5
       arg: 4.1.3
@@ -4449,6 +4458,8 @@ snapshots:
 
   undici-types@7.18.2: {}
 
+  undici-types@7.24.6: {}
+
   universalify@2.0.1: {}
 
   unpipe@1.0.0: {}
@@ -4476,9 +4487,9 @@ snapshots:
 
   vary@1.1.2: {}
 
-  wa-sticker-formatter@4.4.4:
+  wa-sticker-formatter@4.4.4(debug@4.4.3(supports-color@5.5.0)):
     dependencies:
-      axios: 0.21.4
+      axios: 0.21.4(debug@4.4.3(supports-color@5.5.0))
       file-type: 16.5.4
       fluent-ffmpeg: 2.1.3
       fs-extra: 10.1.0
@@ -4494,13 +4505,13 @@ snapshots:
 
   webidl-conversions@3.0.1: {}
 
-  whatsapp-web.js@1.34.7(typescript@6.0.3):
+  whatsapp-web.js@1.34.7(supports-color@5.5.0)(typescript@6.0.3):
     dependencies:
       fluent-ffmpeg: 2.1.3
       mime: 3.0.0
       node-fetch: 2.7.0
       node-webpmux: 3.2.1
-      puppeteer: 24.38.0(typescript@6.0.3)
+      puppeteer: 24.38.0(supports-color@5.5.0)(typescript@6.0.3)
     optionalDependencies:
       archiver: 7.0.1
       fs-extra: 11.3.4
@@ -4530,7 +4541,7 @@ snapshots:
 
   wkx@0.5.0:
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.5
 
   wrap-ansi@7.0.0:
     dependencies:

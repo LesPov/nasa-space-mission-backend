@@ -1,9 +1,10 @@
-
 import { NextFunction, Request, Response } from 'express';
 import { PlayerStateModel } from '../models/playerStateModel';
+// 🔥 NUEVO: Importación del contrato DTO
+import { SaveProgressDto } from '../../../shared/contracts';
 
 class PlayerStateController {
-    public async loadGame(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async loadGame(req: Request<{ episodeId: string, slot: string }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const userId = req.user!.id;
             const { episodeId, slot } = req.params;
@@ -29,7 +30,7 @@ class PlayerStateController {
         }
     }
 
-    public async saveGame(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async saveGame(req: Request<{ episodeId: string, slot: string }, any, SaveProgressDto>, res: Response, next: NextFunction): Promise<void> {
         try {
             const userId = req.user!.id;
             const { episodeId, slot } = req.params;

@@ -1,9 +1,8 @@
-
 import { NextFunction, Request, Response } from 'express';
 import { SceneObjectModel } from '../../scenes/models/sceneObjectModel';
 
 class SceneObjectController {
-    public async getObjectById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async getObjectById(req: Request<{ episodeId: string, objectId: string }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const { episodeId, objectId } = req.params;
             const sceneObject = await SceneObjectModel.findOne({

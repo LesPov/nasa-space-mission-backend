@@ -1,11 +1,22 @@
+
 import { EpisodeModel } from '../models/episodeModel';
 import { EpisodeVersionModel } from '../models/episodeVersionModel';
+import { NarrativeRoleModel } from '../models/narrativeRoleModel';
+import { PrefabModel } from '../../prefabs/models/prefabModel';
 import sequelize from '../../../infrastructure/database/config';
 import { SceneModel } from '../../scenes/models/sceneModel';
 
 class EpisodeLogicService {
     public async getAllEpisodes() {
-        const episodes = await EpisodeModel.findAll({ order: [['createdAt', 'DESC']] });
+        // 🔥 Extraemos los Episodios incluyendo su lista de Roles, y el Prefab(Modelo 3D) que le pertenece a cada Rol
+        const episodes = await EpisodeModel.findAll({ 
+            order: [['createdAt', 'DESC']],
+            include: [{ 
+                model: NarrativeRoleModel, 
+                as: 'narrativeRoles',
+                include: [{ model: PrefabModel, as: 'characterPrefab' }]
+            }]
+        });
         return episodes.map(epi => epi.toJSON());
     }
 

@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { PrefabModel } from '../models/prefabModel';
-// 🔥 FIX: Import relativo correcto
 import { AssetModel } from '../../assets/models/assetModel';
+// 🔥 NUEVO: Importación del contrato compartido
+import { PrefabDto } from '../../../shared/contracts';
  
 class PrefabController {
     
@@ -17,7 +18,7 @@ class PrefabController {
         }
     }
 
-    public async createPrefab(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async createPrefab(req: Request<any, any, PrefabDto>, res: Response, next: NextFunction): Promise<void> {
         try {
             const { name, type, assetId, properties } = req.body;
 
@@ -38,7 +39,7 @@ class PrefabController {
         }
     }
 
-    public async deletePrefab(req: Request, res: Response, next: NextFunction): Promise<void> {
+    public async deletePrefab(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const { id } = req.params;
             const deleted = await PrefabModel.destroy({ where: { id } });

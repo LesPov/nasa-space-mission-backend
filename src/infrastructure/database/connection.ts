@@ -1,6 +1,5 @@
 import sequelize from "./config";
 
-// 1. IMPORTAMOS ÚNICAMENTE LOS REGISTRADORES DE ASOCIACIONES (Arquitectura Modular)
 import { registerAuthAssociations } from "../../features/auth/auth.associations";
 import { registerProfilesAssociations } from "../../features/profiles/profiles.associations";
 import { registerEpisodesAssociations } from "../../features/episodes/episodes.associations";
@@ -10,10 +9,13 @@ import { registerPrefabsAssociations } from "../../features/prefabs/prefabs.asso
 import { registerNarrativeAssociations } from "../../features/narrative/narrative.associations";
 import { registerPlayerProgressAssociations } from "../../features/player-progress/player-progress.associations";
 
+// Carga en tiempo de ejecución para registrar el modelo sin exigir declaraciones
+// TypeScript del módulo de efectos secundarios.
+require('../../features/episodes/models/narrativeRoleModel');
+
 export const defineDatabaseAssociations = () => {
     console.log("[Database] Registrando asociaciones modulares...");
 
-    // 2. EJECUTAMOS LAS ASOCIACIONES EN ORDEN ESTRICTO DE JERARQUÍA DOMINIO
     registerAuthAssociations();
     registerProfilesAssociations();
     registerEpisodesAssociations();
