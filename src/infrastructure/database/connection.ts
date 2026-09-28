@@ -8,10 +8,12 @@ import { registerAssetsAssociations } from "../../features/assets/assets.associa
 import { registerPrefabsAssociations } from "../../features/prefabs/prefabs.associations";
 import { registerNarrativeAssociations } from "../../features/narrative/narrative.associations";
 import { registerPlayerProgressAssociations } from "../../features/player-progress/player-progress.associations";
+import { registerSpaceMissionAssociations } from "../../features/space-mission/space-mission.associations";
 
 // Carga en tiempo de ejecución para registrar el modelo sin exigir declaraciones
 // TypeScript del módulo de efectos secundarios.
 require('../../features/episodes/models/narrativeRoleModel');
+require('../../features/space-mission/models/missionProfileModel');
 
 export const defineDatabaseAssociations = () => {
     console.log("[Database] Registrando asociaciones modulares...");
@@ -24,6 +26,7 @@ export const defineDatabaseAssociations = () => {
     registerPrefabsAssociations();
     registerNarrativeAssociations();
     registerPlayerProgressAssociations();
+    registerSpaceMissionAssociations();
 
     console.log("[Database] Asociaciones de modelos modulares definidas con éxito.");
 };
@@ -39,7 +42,7 @@ export const syncDatabase = async () => {
         }
 
         await sequelize.sync({ alter: true });
-        console.log('[Database] ✅ Sincronización de esquemas completada (alter: true). Modelos jerárquicos narrativos montados.');
+        console.log('[Database] ✅ Sincronización de esquemas completada (alter: true). Modelos jerárquicos narrativos y aeroespaciales montados.');
     } catch (error) {
         console.error('[Database] ❌ Error al inicializar la base de datos:', error);
         throw error;

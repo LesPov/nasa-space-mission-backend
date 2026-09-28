@@ -1,10 +1,10 @@
+
 import { EpisodeModel } from '../../episodes/models/episodeModel';
 import { EpisodeVersionModel } from '../../episodes/models/episodeVersionModel';
 import { SceneModel } from '../models/sceneModel';
 import { SceneObjectModel } from '../models/sceneObjectModel';
 import { TriggerModel } from '../models/triggerModel';
 import { SceneConnectionModel } from '../models/sceneConnectionModel';
-// 🔥 FIX: Import relativo correcto
 import { CinematicModel } from '../../narrative/model/narrativeModels';
 import sequelize from '../../../infrastructure/database/config';
 import crypto from 'crypto';
@@ -88,6 +88,8 @@ class SceneLogicService  {
 
         return {
             scene: scene.toJSON(),
+            // 🔥 Mapeamos uiSettings directamente para que el DTO del Front lo reciba
+            uiSettings: scene.getDataValue('uiSettings'),
             sceneObjects: sceneObjects.map(obj => obj.toJSON()),
             triggers: triggers.map(t => t.toJSON()),
             connections: connections.map(c => c.toJSON()),
@@ -104,12 +106,14 @@ class SceneLogicService  {
        deletedTriggers: string[], 
        deletedCinematics: string[], 
        environmentSettings: any, 
+       uiSettings: any, 
        spawnPoint: any
     ) {
         const transaction = await sequelize.transaction();
         try {
             const updateData: any = {};
             if (environmentSettings) updateData.environmentSettings = environmentSettings;
+            if (uiSettings) updateData.uiSettings = uiSettings; // 🔥 FIX PERSISTENCIA MISION
             if (spawnPoint) updateData.spawnPoint = spawnPoint; 
 
             if (Object.keys(updateData).length > 0) {

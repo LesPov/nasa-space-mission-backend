@@ -1,10 +1,14 @@
+
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
 import { SceneInterface } from '../../narrative/interfaces/narrativeInterfaces';
 
-type SceneCreationAttributes = Optional<SceneInterface, 'id'>;
+type SceneAttributes = SceneInterface & {
+    uiSettings?: Record<string, unknown> | null;
+};
+type SceneCreationAttributes = Optional<SceneAttributes, 'id'>;
 
-export const SceneModel = sequelize.define<Model<SceneInterface, SceneCreationAttributes>>('Scene', {
+export const SceneModel = sequelize.define<Model<SceneAttributes, SceneCreationAttributes>>('Scene', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -23,6 +27,13 @@ export const SceneModel = sequelize.define<Model<SceneInterface, SceneCreationAt
         allowNull: false,
         defaultValue: {},
         comment: 'Skybox, fog, luz ambiental, gravedad, y filtros Blanco/Negro/Color específicos de esta plataforma'
+    },
+    // 🔥 FIX: NUEVA COLUMNA ESTRICTA DE MISIÓN LOCAL
+    uiSettings: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {},
+        comment: 'Diseño del modal, descripción y objetivos de misión específicos para ESTA plataforma'
     },
     spawnPoint: {
         type: DataTypes.JSON,

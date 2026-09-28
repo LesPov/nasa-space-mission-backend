@@ -17,10 +17,12 @@ import validateToken from '../infrastructure/middleware/valdiateToken/validateTo
 import validateRole from '../infrastructure/middleware/validateRole/validateRole';
 import { UserRole } from '../infrastructure/middleware/common/enums';
 
-// 🔥 Importamos los modelos para forzar la creación/actualización de usuarios correcta
+// 🔥 Modelos base y de dominio espacial para asegurar inicialización en el pool Sequelize
 import { AuthModel } from '../features/auth/models/authModel';
 import { VerificationModel } from '../features/auth/models/verificationModel';
 import { userProfileModel } from '../features/profiles/models/userProfileModel';
+import { EpisodeModel } from '../features/episodes/models/episodeModel';
+import { MissionProfileModel } from '../features/space-mission/models/missionProfileModel';
 
 dotenv.config();
 
@@ -38,12 +40,19 @@ class Server {
         try {
             console.log("[Server] Iniciando secuencia de arranque rápido...");
             
+            // 1. Registro de relaciones jerárquicas (Auth, Episodios, Misión Espacial, Escenas, Triggers)
             defineDatabaseAssociations();
+
+            // 2. Autenticación y sincronización segura con la Base de Datos
             await syncDatabase();
             
+            // 3. Middlewares de seguridad, CORS, compresión y parsers
             this.configureMiddlewares();
+
+            // 4. Montaje de rutas API REST
             this.configureRoutes();
             
+            // 5. Apertura del puerto HTTP
             this.startListening();
         } catch (error) {
             console.error("❌ Fallo crítico durante el arranque del servidor.", error);
@@ -76,7 +85,7 @@ class Server {
         };
         this.app.use(cors(corsOptions));
 
-        // 🔥 OPTIMIZACIÓN: No comprimir archivos 3D/Multimedia, ahorra muchísima CPU en el backend
+        // 🔥 OPTIMIZACIÓN: Excluir compresión en modelos 3D y multimedia pesada
         this.app.use(compression({
             filter: (req, res) => {
                 if (req.headers['x-no-compression']) { return false; }
@@ -85,12 +94,12 @@ class Server {
             }
         }));
 
-        // 🔥 PROTECCIÓN DE MEMORIA: Reducimos de 150mb a 25mb para evitar bloqueos del Event Loop.
+        // 🔥 Límite de carga para payloads JSON de mapas y telemetría
         const bodyLimit = process.env.BODY_LIMIT || '25mb';
         this.app.use(express.json({ limit: bodyLimit }));
         this.app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
-        // 🔥 CACHÉ ULTRA AGRESIVA: Los assets servidos al frontend se guardan en el disco del navegador por 1 año.
+        // 🔥 Servir uploads locales con caché inmutable
         const uploadsPath = path.resolve(process.cwd(), 'uploads');
         this.app.use('/uploads', express.static(uploadsPath, {
             maxAge: '1y',
@@ -103,8 +112,12 @@ class Server {
         const authService = new AuthService();
         const episodeService = new EpisodeService();
 
+        // Subrutas principales
         this.app.use('/auth/user', authService.getRouter());
+        
+        // 🔥 Rutas de Episodios (incluye automáticamente /api/episodes/:episodeId/mission-profile)
         this.app.use('/api/episodes', episodeService.getRouter());
+        
         this.app.use('/api/assets', assetRoutes);
         this.app.use('/api/prefabs', prefabRoutes);
 
@@ -113,8 +126,7 @@ class Server {
         });
 
         // =====================================================================
-        // 🔥 RUTA PARA RESETEAR/CREAR USUARIOS Y LIMPIAR INTENTOS FALLIDOS
-        // Protegida: Solo Admin, y no se registra en Producción
+        // 🔥 RUTA PARA RESETEAR/CREAR USUARIOS Y LIMPIAR INTENTOS FALLIDOS (DEV)
         // =====================================================================
         if (process.env.NODE_ENV !== 'production') {
             this.app.get(
@@ -123,13 +135,10 @@ class Server {
                 validateRole(UserRole.Admin), 
                 async (_req: Request, res: Response) => {
                     try {
-                        // 1. Hasheamos la contraseña de manera nativa y perfecta
                         const passwordPlana = '123456789Leo-';
                         const hashedPassword = await bcrypt.hash(passwordPlana, 10);
 
-                        // ==========================================
-                        // 2. CREAR / ACTUALIZAR USUARIO ADMIN
-                        // ==========================================
+                        // 1. CREAR / ACTUALIZAR USUARIO ADMIN
                         let admin = await AuthModel.findOne({ where: { username: 'admin' } });
                         if (admin) {
                             await admin.update({ password: hashedPassword, status: 'Activado' });
@@ -144,7 +153,6 @@ class Server {
                             } as any);
                         }
 
-                        // Limpiar intentos fallidos y bloqueos del Admin
                         let adminVerif = await VerificationModel.findOne({ where: { userId: admin.id } });
                         if (adminVerif) {
                             await adminVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
@@ -161,9 +169,7 @@ class Server {
                             } as any);
                         }
 
-                        // ==========================================
-                        // 3. CREAR / ACTUALIZAR USUARIO JUGADOR
-                        // ==========================================
+                        // 2. CREAR / ACTUALIZAR USUARIO JUGADOR
                         let jugador = await AuthModel.findOne({ where: { username: 'jugador1' } });
                         if (jugador) {
                             await jugador.update({ password: hashedPassword, status: 'Activado' });
@@ -178,7 +184,6 @@ class Server {
                             } as any);
                         }
 
-                        // Limpiar intentos fallidos y bloqueos del Jugador
                         let jugadorVerif = await VerificationModel.findOne({ where: { userId: jugador.id } });
                         if (jugadorVerif) {
                             await jugadorVerif.update({ isVerified: true, isEmailVerified: true, isPhoneVerified: true, loginAttempts: 0, blockExpiration: null });
@@ -209,6 +214,7 @@ class Server {
             );
         }
 
+        // Middleware centralizado de errores
         this.app.use(errorMiddleware);
     }
 

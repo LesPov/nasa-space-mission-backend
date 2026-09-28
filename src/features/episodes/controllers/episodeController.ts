@@ -1,7 +1,7 @@
+
 import { NextFunction, Request, Response } from 'express';
 import EpisodeLogicService from '../services/episodeLogicService';
 
-// No requiere un DTO complejo al ser solo título y descripción
 interface CreateEpisodeDto {
     title: string;
     description?: string;
@@ -22,6 +22,13 @@ class EpisodeController {
             }
             const newEpisode = await EpisodeLogicService.createEpisode(req.body, req.user.id);
             res.status(201).json(newEpisode);
+        } catch (error: any) { next(error); }
+    }
+
+    public async updateEpisode(req: Request<{ episodeId: string }, any, CreateEpisodeDto>, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const episode = await EpisodeLogicService.updateEpisode(Number(req.params.episodeId), req.body);
+            res.status(200).json(episode);
         } catch (error: any) { next(error); }
     }
 }

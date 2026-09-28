@@ -8,7 +8,6 @@ import { SceneModel } from '../../scenes/models/sceneModel';
 
 class EpisodeLogicService {
     public async getAllEpisodes() {
-        // 🔥 Extraemos los Episodios incluyendo su lista de Roles, y el Prefab(Modelo 3D) que le pertenece a cada Rol
         const episodes = await EpisodeModel.findAll({ 
             order: [['createdAt', 'DESC']],
             include: [{ 
@@ -54,6 +53,15 @@ class EpisodeLogicService {
             await transaction.rollback();
             throw error;
         }
+    }
+
+    // 🔥 NUEVO MÉTODO PARA GUARDAR METADATA GENERAL DEL EPISODIO
+    public async updateEpisode(episodeId: number, data: { title: string; description?: string }) {
+        const episode = await EpisodeModel.findByPk(episodeId);
+        if (!episode) throw new Error("Episodio no encontrado");
+
+        await episode.update(data);
+        return episode.toJSON();
     }
 }
 export default new EpisodeLogicService();

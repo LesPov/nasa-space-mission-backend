@@ -1,6 +1,6 @@
+
 import { NextFunction, Request, Response } from 'express';
 import SceneLogicService from '../services/sceneLogicService';
-// 🔥 NUEVO: Importación del contrato compartido
 import { SceneSavePayload } from '../../../shared/contracts';
 
 const validateSaveMapDTO = (data: SceneSavePayload) => {
@@ -31,7 +31,6 @@ class SceneController {
         } catch (error: any) { next(error); }
     }
 
-    // 🔥 NUEVO: Uso estricto del DTO
     public async saveSceneMap(req: Request<{ sceneId: string }, any, SceneSavePayload>, res: Response, next: NextFunction): Promise<void> {
         try {
             const bodyData: SceneSavePayload = req.body;
@@ -46,6 +45,7 @@ class SceneController {
                 bodyData.deletedTriggers || [],
                 bodyData.deletedCinematics || [],
                 bodyData.environmentSettings,
+                bodyData.uiSettings, // 🔥 Pasamos uiSettings
                 bodyData.spawnPoint
             );
             res.status(200).json(response);

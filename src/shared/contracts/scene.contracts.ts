@@ -1,3 +1,4 @@
+
 export interface Vector3Dto {
   x: number;
   y: number;
@@ -41,14 +42,14 @@ export interface GameConditionDto {
   type: string;
   key: string;
   value?: string | number | boolean;
-  scope?: string; // 🔥 NUEVO FASE 1
+  scope?: string; 
 }
 
 export interface GameStateMutationDto {
   type: string;
   key: string;
   value?: string | number | boolean;
-  scope?: string; // 🔥 NUEVO FASE 1
+  scope?: string; 
 }
 
 export interface SceneObjectPropertiesDto {
@@ -75,7 +76,7 @@ export interface SceneObjectPropertiesDto {
   collider?: ColliderDto;
   capsule?: ColliderDto;
   camOffset?: Vector3Dto;
-  playerConfig?: any; // Manteniendo flexibilidad temporal
+  playerConfig?: any; 
   selectionRange?: SelectionRangeDto;
   animationNames?: string[];
   autoAnim?: AutoAnimDto;
@@ -190,6 +191,7 @@ export interface SceneSavePayload {
   deletedTriggers: string[];
   deletedCinematics: string[];
   environmentSettings: WorldSettingsDto;
+  uiSettings?: any;
   spawnPoint: Vector3Dto;
 }
 
@@ -199,6 +201,7 @@ export interface SceneLoadPayload {
     episodeVersionId?: number;
     name?: string;
     environmentSettings?: any;
+    uiSettings?: any;
   };
   environmentSettings?: any;
   uiSettings?: any;
