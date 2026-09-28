@@ -10,7 +10,7 @@ import playthroughRoutes from '../../narrative/routes/playthroughRoutes';
 import playerStateRoutes from '../../player-progress/routes/playerStateRoutes';
 import { episodeRoleRoutes, standaloneRoleRoutes } from './narrativeRoleRoutes';
  
-const episodeRoutes = Router();
+const episodeRoutes = Router(); 
 const adminOnly = [validateToken, validateRole(UserRole.Admin)]; 
 const loggedInUsers = [validateToken]; 
 

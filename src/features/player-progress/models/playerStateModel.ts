@@ -2,7 +2,6 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../../infrastructure/database/config';
 import { PlayerStateInterface } from '../interfaces/playerStateInterface';
 
-// Opcional: para la creación, algunos campos pueden ser omitidos
 interface PlayerStateCreationAttributes extends Optional<PlayerStateInterface, 'id' | 'worldState' | 'inventory' | 'slot'> {}
 
 export const PlayerStateModel = sequelize.define<Model<PlayerStateInterface, PlayerStateCreationAttributes>>('PlayerState', {
@@ -44,17 +43,11 @@ export const PlayerStateModel = sequelize.define<Model<PlayerStateInterface, Pla
     },
 }, { 
     tableName: 'player_states', 
-    timestamps: true, // `updatedAt` se convierte en la fecha del guardado
-    // Un índice compuesto para asegurar que un jugador solo tenga una partida por slot en un episodio
+    timestamps: true,
     indexes: [
-        {
+        { 
             unique: true,
             fields: ['userId', 'episodeId', 'slot']
         }
     ]
 });
-
-// 🔥 FIX: Sincronizar automáticamente la tabla de estado del jugador para evitar el Error 500 al entrar
-PlayerStateModel.sync({ alter: true })
-    .then(() => console.log('[PlayerStateModel] Tabla sincronizada correctamente'))
-    .catch(err => console.error('[PlayerStateModel] Error en sincronización:', err));

@@ -1,4 +1,3 @@
-
 import qrcode from 'qrcode-terminal';
 import path from 'path';
 
@@ -18,12 +17,19 @@ export const initializeChatbot = async () => {
     try {
         console.log('[Chatbot] Iniciando carga diferida de dependencias pesadas en segundo plano...');
         
-        // 🔥 LAZY LOADING: Importamos whatsapp-web y puppeteer dinámicamente. 
-        // Solo se ejecutan tras levantar Express.
-        const { Client, LocalAuth } = await import('whatsapp-web.js');
-        const puppeteer = await import('puppeteer');
+        // Manejo de interoperabilidad CJS/ESM dinámica
+        const rawWwebjs = await import('whatsapp-web.js');
+        const wwebjs = (rawWwebjs as any).default || rawWwebjs;
+        const { Client, LocalAuth } = wwebjs;
 
-        const sessionPath = path.resolve(__dirname, '../../../.wwebjs_sessions');
+        if (!Client || !LocalAuth) {
+            throw new Error("No se pudieron cargar Client o LocalAuth desde whatsapp-web.js");
+        }
+
+        const rawPuppeteer = await import('puppeteer');
+        const puppeteer = (rawPuppeteer as any).default || rawPuppeteer;
+
+        const sessionPath = path.resolve(process.cwd(), '.wwebjs_sessions');
 
         clientInstance = new Client({
             authStrategy: new LocalAuth({
@@ -65,10 +71,9 @@ export const initializeChatbot = async () => {
             console.log('⚠️ Desconectado de WhatsApp. Razón:', reason);
         });
 
-        // Este proceso ahora se ejecuta de forma asíncrona sin trabar el Event Loop raíz
         await clientInstance.initialize();
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Fallo crítico al iniciar el Chatbot de WhatsApp:', error);
         console.log('⚠️ El servidor de Express continuará funcionando sin el bot de WhatsApp.');
     }

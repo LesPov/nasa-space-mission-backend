@@ -22,4 +22,4 @@ const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
     logging: false, // Desactivar logs de SQL en producción
 });
 
-export default sequelize;
+export default sequelize; 
