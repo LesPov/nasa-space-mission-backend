@@ -8,6 +8,7 @@ import { SceneConnectionModel } from '../models/sceneConnectionModel';
 import { CinematicModel } from '../../narrative/model/narrativeModels';
 import sequelize from '../../../infrastructure/database/config';
 import crypto from 'crypto';
+import { AppError } from '../../../infrastructure/errors/app.error';
 
 class SceneLogicService  {
     
@@ -75,6 +76,15 @@ class SceneLogicService  {
             isInitialScene: false
         });
         return newScene.toJSON();
+    }
+
+    // 🔥 NUEVO SERVICIO: Actualizar los metadatos base de la escena, como el nombre.
+    public async updateScene(sceneId: number, data: { name?: string }) {
+        const scene = await SceneModel.findByPk(sceneId);
+        if (!scene) throw new AppError("Plataforma / Escena no encontrada", 404);
+
+        await scene.update(data);
+        return scene.toJSON();
     }
 
     public async getSceneFullData(sceneId: number) {

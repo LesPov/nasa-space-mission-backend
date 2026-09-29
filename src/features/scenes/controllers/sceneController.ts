@@ -24,6 +24,17 @@ class SceneController {
         } catch (error: any) { next(error); }
     }
 
+    // 🔥 NUEVO CONTROLADOR: Actualiza una escena individual (ej: su nombre)
+    public async updateScene(req: Request<{ sceneId: string }, any, { name?: string }>, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const sceneId = Number(req.params.sceneId);
+            const scene = await SceneLogicService.updateScene(sceneId, req.body);
+            res.status(200).json({ message: 'Plataforma actualizada correctamente', scene });
+        } catch (error: any) {
+            next(error);
+        }
+    }
+
     public async getSceneFull(req: Request<{ sceneId: string }>, res: Response, next: NextFunction): Promise<void> {
         try {
             const data = await SceneLogicService.getSceneFullData(Number(req.params.sceneId));

@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import SceneController from '../controllers/sceneController';
 import { UserRole } from '../../../infrastructure/middleware/common/enums';
@@ -20,6 +21,10 @@ sceneRoutes.post('/', adminOnly, SceneController.createScene);
 const standaloneSceneRoutes = Router({ mergeParams: true });
 // GET /api/episodes/scenes/:sceneId
 standaloneSceneRoutes.get('/:sceneId', loggedInUsers, SceneController.getSceneFull);
+
+// 🔥 NUEVO ENDPOINT: PUT /api/episodes/scenes/:sceneId -> Permite actualizar nombre y propiedades directas de la escena
+standaloneSceneRoutes.put('/:sceneId', adminOnly, SceneController.updateScene);
+
 // POST /api/episodes/scenes/:sceneId/save-map
 standaloneSceneRoutes.post('/:sceneId/save-map', adminOnly, SceneController.saveSceneMap);
 
