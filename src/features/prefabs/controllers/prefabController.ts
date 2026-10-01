@@ -1,7 +1,7 @@
+// src/features/prefabs/controllers/prefabController.ts
 import { NextFunction, Request, Response } from 'express';
 import { PrefabModel } from '../models/prefabModel';
 import { AssetModel } from '../../assets/models/assetModel';
-// 🔥 NUEVO: Importación del contrato compartido
 import { PrefabDto } from '../../../shared/contracts';
  
 class PrefabController {
@@ -34,6 +34,35 @@ class PrefabController {
             });
 
             res.status(201).json(prefabCompleto);
+        } catch (error: any) {
+            next(error);
+        }
+    }
+
+    // 🔥 NUEVO: Controlador de actualización integral
+    public async updatePrefab(req: Request<{ id: string }, any, PrefabDto>, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { id } = req.params;
+            const { name, type, assetId, properties } = req.body;
+
+            if (!name || !type || !properties) {
+                res.status(400).json({ message: "Faltan datos obligatorios (name, type, properties)." });
+                return;
+            }
+
+            const prefab = await PrefabModel.findByPk(id);
+            if (!prefab) {
+                res.status(404).json({ message: "Prefab no encontrado." });
+                return;
+            }
+
+            await prefab.update({ name, type, assetId: assetId || null, properties });
+
+            const prefabCompleto = await PrefabModel.findByPk(prefab.getDataValue('id'), {
+                include: [{ model: AssetModel, as: 'asset' }]
+            });
+
+            res.status(200).json(prefabCompleto);
         } catch (error: any) {
             next(error);
         }

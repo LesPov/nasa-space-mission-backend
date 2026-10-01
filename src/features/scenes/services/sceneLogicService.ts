@@ -253,4 +253,4 @@ class SceneLogicService  {
     }
 }
 
-export default new SceneLogicService();
+export default new SceneLogicService(); 
